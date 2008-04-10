@@ -1,0 +1,212 @@
+module cosmology
+
+  ! This file contains routines having to do with the cosmological 
+  ! evolution
+  
+  ! - cosmology_init: initializes cosmological time and sets lengths
+  !            and volumes from comoving to proper scaling.
+  ! - time2zred: convert time to redshift
+  ! - zred2time: convert redshift to time
+  ! - redshift_evol: calculate redshift from time, and zfactor between the
+  !    current and previous time
+  ! - cosmo_cool: cosmological adiabatic cooling rate
+  ! - compton_cool: Compton cooling wrt the CMB.
+
+  use precision, only: dp
+  use my_mpi
+  use file_admin, only: stdinput
+
+  ! use cosmology_parameters
+
+  implicit none
+
+  real(kind=dp),parameter :: cmbtemp=2.726 ! CMB temperature
+
+  logical :: cosmological
+  real(kind=dp) :: h ! Hubble constant (in 100 km/s/Mpc)
+  real(kind=dp) :: Omega0 ! Total matter density (in critical density)
+  ! Derived parameters
+  real(kind=dp) :: H0 ! Hubble constant (cgs)
+ 
+  real(kind=dp) :: zred_t0 ! initial redshift
+  real(kind=dp) :: t0      ! time of initial redshift
+  real(kind=dp) :: zred    ! current redshift
+  real(kind=dp) :: zfactor ! scaling factor between two redshifts
+
+contains
+  ! =======================================================================
+
+  subroutine cosmology_init (cosmo_switch)
+    
+    use astroconstants, only: Mpc
+
+    logical, intent(in) :: cosmo_switch
+
+    real(kind=dp) :: zred0
+
+    ! Activate cosmological stuff
+    cosmological = cosmo_switch
+
+    if (cosmological) then
+       ! Ask for cosmological parameters
+       if (rank == 0) then
+          write(*,'(A,$)') 'Initial redshift?'
+          read(stdinput,*) zred0
+          write(*,'(A,$)') 'Hubble constant? (0-1)'
+          read(stdinput,*) h         
+          write(*,'(A,$)') 'Density parameter Omega0?'
+          read(stdinput,*) Omega0
+       endif
+#ifdef MPI
+       ! Distribute the input parameters to the other nodes
+       call MPI_BCAST(zred0,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_NEW,ierror)
+       call MPI_BCAST(h,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_NEW,ierror)
+       call MPI_BCAST(Omega0,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_NEW,ierror)
+#endif
+       
+       ! Derived parameters
+       H0=h*100.0*1e5/Mpc ! Hubble constant (cgs)
+       
+       ! Cosmological time corresponding to (initial) redshift zred0
+       t0 = 2.*(1.+zred0)**(-1.5)/(3.*H0*sqrt(Omega0))
+       
+       ! Initialize redshift
+       zred_t0=zred0 ! keep initial redshift
+       zred=0.0 ! needs to be zero, so comoving will be changed to proper
+       
+    endif
+
+  end subroutine cosmology_init
+
+  ! =======================================================================
+
+  function time2zred (time)
+
+    ! Calculates the cosmological redshift for a given time
+
+    ! Author: Garrelt Mellema
+
+    ! Date: 20-Aug-2006 (f77: 21-May-2005)
+    
+    ! Version: f90
+
+    ! History: - 20-Aug-2006, conversion to f90
+
+    real(kind=dp) :: time2zred
+    real(kind=dp),intent(in) :: time
+
+    ! Calculate the redshift
+    time2zred = -1+(1.+zred_t0)*(t0/(t0+time))**(2./3.)
+
+    return
+  end function time2zred
+
+  ! =======================================================================
+
+  function zred2time (zred1)
+
+    ! Calculates the time for a given cosmological redshift
+
+    ! Author: Garrelt Mellema
+
+    ! Date: 30-Sep-2006
+    
+    ! Version: f90
+
+    ! History: 
+
+    real(kind=dp) :: zred2time
+    real(kind=dp),intent(in) :: zred1
+
+    ! Calculate the redshift
+    zred2time = t0*( ((1.0+zred_t0)/(1.0+zred1))**1.5 - 1.0 )
+
+    return
+  end function zred2time
+
+  ! =======================================================================
+
+  subroutine redshift_evol (time)
+
+    ! Calculates the cosmological redshift from time
+    ! and the scale factor zfactor for use in cosmo_evol
+    
+    ! Author: Garrelt Mellema
+    ! Date: 10-Mar-2006
+    ! Version: F90
+
+    ! History:
+    ! - 19-Nov-2004: first version f77
+
+    real(kind=dp),intent(in) :: time
+
+    real(kind=dp) :: zred_prev
+
+    ! Calculate the change since the previous redshift.
+    ! Note: the initial redshift should be ZERO since
+    ! the variables are initialized as comoving!
+    zred_prev=zred
+    zred = -1+(1.+zred_t0)*((t0+time)/t0)**(-2./3.)
+
+    ! Take the average zfactor between zred_prev and zred
+    zfactor=(1.0+zred_prev)/(1.+zred)
+
+  end subroutine redshift_evol
+
+  ! =======================================================================
+
+  real(kind=dp) function cosmo_cool (e_int)
+
+    ! Calculates the cosmological adiabatic cooling
+
+    ! Author: Garrelt Mellema
+    ! Date: 04-Mar-2006
+    ! Version: f90
+
+    ! History:
+    ! 19-Nov-2004: first version f77
+
+    real(kind=dp),intent(in) :: e_int
+
+    real(kind=dp) :: dzdt
+
+    ! Cosmological cooling rate:
+    ! 2*(da/dt)/a*e
+    ! or
+    ! 2*(dz/dt)/(1+z)*e
+    ! with a the cosmological scale factor
+
+    ! dz/dt (for flat LambdaCDM)
+    dzdt=H0*(1.+zred)*sqrt(Omega0*(1.+zred)**3+1.-Omega0)
+
+    !Cooling rate
+    cosmo_cool=e_int*2.0/(1.0+zred)*dzdt
+
+  end function cosmo_cool
+
+  ! =======================================================================
+
+  real(kind=dp) function compton_cool (temper,eldens)
+    
+    ! Calculates the (cosmological) Compton cooling rate
+    
+    ! Author: Garrelt Mellema
+    ! Date: 04-Mar-2006
+    ! Version: first version
+    
+    ! History:
+    ! 16-May-2005: first version f77
+    
+
+    ! parameter reference?
+
+    real(kind=dp),intent(in) :: temper ! temperature
+    real(kind=dp),intent(in) :: eldens ! electron density
+    
+    !Cooling rate
+    compton_cool=5.65e-36*eldens*(1.0+zred)**4* &
+         (temper-cmbtemp*(1.0+zred))
+    
+  end function compton_cool
+  
+end module cosmology

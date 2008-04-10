@@ -1,0 +1,12 @@
+0.0           ! inner radius (cm)
+1.9e24        ! outer radius (cm)
+30000.        ! Teff (K)
+3             ! 3: input is S_star
+1e54          ! S_star
+1             ! test problem number
+1.87e-4       ! density (cm^-3)
+5.0           ! clumping factor
+1.0e2         ! initial temperature (K)
+n             ! isothermal (y/n)
+5.0e8         ! end time (years)
+1            ! number of time steps
