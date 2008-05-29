@@ -1,5 +1,5 @@
 !>
-!!    \brief This module contains atomic constants and parameter definitions
+!! \brief This module contains atomic constants and parameter definitions
 !!
 !! Module for Capreole / C2-Ray (f90)
 !!

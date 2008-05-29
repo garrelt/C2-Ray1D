@@ -1,3 +1,9 @@
+!>
+!! \brief Main program for C2Ray-1D
+!!
+!! \b Author: Garrelt Mellema \n
+!! \b Date: 23-Sep-2006
+!<
 Program C2Ray
 
   ! Author: Garrelt Mellema
@@ -45,37 +51,32 @@ Program C2Ray
 
   implicit none
 
-  ! Start and end time for CPU report
+  !> Start and end time for CPU report
   real :: tstart,tend
+  !> CPU time counters
   integer :: cntr1,cntr2,countspersec
 
   integer :: nstep
   integer :: restart,nz,flag
 
-  ! end_time - end time of the simulation (s)
-  ! dt - time step (s)
-  ! time - actual time (s)
-  ! end_time - end time of calculation (s)
-  ! output_time - time interval between outputs (s)
-  ! next_output_time - time of next output (s)
-  real(kind=dp) :: time,next_output_time
-  real(kind=dp) :: actual_dt
-  real(kind=dp) :: zred_interm
+  real(kind=dp) :: time !< actual time (s)
+  real(kind=dp) :: next_output_time !< time of next output (s)
+  real(kind=dp) :: actual_dt !< actual time step (s)
 
-  ! Input file
+  !> Input file
   character(len=512) :: inputfile
 
-  ! Initialize cpu timer
+  !> Initialize cpu timer
   call cpu_time(tstart)
 
-  ! Initialize wall cock times
+  !> Initialize wall cock times
   call system_clock(cntr1)
 
-  ! Set up MPI structure
+  !> Set up MPI structure
   call mpi_setup()
 
-  ! Set up input stream (either standard input or from file given
-  ! by first argument)
+  !> Set up input stream (either standard input or from file given
+  !> by first argument)
   if (iargc() > 0) then
      call getarg(1,inputfile)
      if (rank == 0) then
@@ -84,7 +85,7 @@ Program C2Ray
      endif
   endif
 
-  ! Initialize output
+  !> Initialize output
   call setup_output()
 
   !Initialize grid
