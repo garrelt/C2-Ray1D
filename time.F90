@@ -1,3 +1,12 @@
+!>
+!! \brief This module handles the time variables
+!!
+!! \b Module for C2-Ray (f90)
+!!
+!! \b Author: Garrelt Mellema
+!!
+!! Date: 2008-05-29 (no date before)
+!<
 module times
 
   ! This module handles the time variables
@@ -9,12 +18,17 @@ module times
 
   implicit none
 
-  real(kind=dp) :: end_time,dt,output_time
+  real(kind=dp) :: end_time !< End time of simulation
+  real(kind=dp) :: dt !< Time step
+  real(kind=dp) :: output_time !< Time interval between outputs
   
 contains
 
   ! =======================================================================
 
+  !>
+  !!  Initializes number of time steps per frame (integration and output)
+  !<
   subroutine time_ini( )
     
     ! Initializes number of time steps per frame (integration and output)
