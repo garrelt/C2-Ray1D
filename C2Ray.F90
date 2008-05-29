@@ -51,14 +51,20 @@ Program C2Ray
 
   implicit none
 
-  !> Start and end time for CPU report
-  real :: tstart,tend
-  !> CPU time counters
-  integer :: cntr1,cntr2,countspersec
+  ! CPU time variables
+  real :: tstart !< Start time for CPU report
+  real :: tend !< End time for CPU report
 
+  ! Wall clock time variables
+  integer :: cntr1 !< Start time wall clock
+  integer :: cntr2 !< End time wall clock
+  integer :: countspersec !< counts per second (for wall clock time)
+
+  ! 
   integer :: nstep
   integer :: restart,nz,flag
 
+  ! Time variables
   real(kind=dp) :: time !< actual time (s)
   real(kind=dp) :: next_output_time !< time of next output (s)
   real(kind=dp) :: actual_dt !< actual time step (s)
@@ -66,17 +72,17 @@ Program C2Ray
   !> Input file
   character(len=512) :: inputfile
 
-  !> Initialize cpu timer
+  ! Initialize cpu timer
   call cpu_time(tstart)
 
-  !> Initialize wall cock times
+  ! Initialize wall cock times
   call system_clock(cntr1)
 
-  !> Set up MPI structure
+  ! Set up MPI structure
   call mpi_setup()
 
-  !> Set up input stream (either standard input or from file given
-  !> by first argument)
+  ! Set up input stream (either standard input or from file given
+  ! by first argument)
   if (iargc() > 0) then
      call getarg(1,inputfile)
      if (rank == 0) then
@@ -85,10 +91,10 @@ Program C2Ray
      endif
   endif
 
-  !> Initialize output
+  ! Initialize output
   call setup_output()
 
-  !Initialize grid
+  ! Initialize grid
   call grid_ini()
 
   ! Initialize the material properties
