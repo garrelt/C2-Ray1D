@@ -1,14 +1,24 @@
+!>
+!! \brief This module contains data and routines for cosmological problems
+!!
+!! Module for Capreole / C2-Ray (f90)
+!!
+!! \b Author: Garrelt Mellema
+!!
+!! \b Date: 
+!!
+!! This module keeps track of the current redshift
+!!
+
 module cosmology
 
-  ! This file contains routines having to do with the cosmological 
+  ! This module contains routines having to do with the cosmological 
   ! evolution
   
   ! - cosmology_init: initializes cosmological time and sets lengths
   !            and volumes from comoving to proper scaling.
   ! - time2zred: convert time to redshift
   ! - zred2time: convert redshift to time
-  ! - redshift_evol: calculate redshift from time, and zfactor between the
-  !    current and previous time
   ! - cosmo_cool: cosmological adiabatic cooling rate
   ! - compton_cool: Compton cooling wrt the CMB.
 
@@ -20,22 +30,23 @@ module cosmology
 
   implicit none
 
-  real(kind=dp),parameter :: cmbtemp=2.726 ! CMB temperature
+  real(kind=dp),parameter :: cmbtemp=2.726 !< CMB temperature
 
-  logical :: cosmological
-  real(kind=dp) :: h ! Hubble constant (in 100 km/s/Mpc)
-  real(kind=dp) :: Omega0 ! Total matter density (in critical density)
+  logical :: cosmological !< true if cosmological simulation
+  real(kind=dp) :: h !< Hubble constant (in 100 km/s/Mpc)
+  real(kind=dp) :: Omega0 !< Total matter density (in critical density)
   ! Derived parameters
-  real(kind=dp) :: H0 ! Hubble constant (cgs)
+  real(kind=dp) :: H0 !< Hubble constant (cgs)
  
-  real(kind=dp) :: zred_t0 ! initial redshift
-  real(kind=dp) :: t0      ! time of initial redshift
-  real(kind=dp) :: zred    ! current redshift
-  real(kind=dp) :: zfactor ! scaling factor between two redshifts
+  real(kind=dp) :: zred_t0 !< initial redshift
+  real(kind=dp) :: t0      !< time of initial redshift
+  real(kind=dp) :: zred    !< current redshift
+  real(kind=dp) :: zfactor !< scaling factor between two redshifts (used in cosmological_evolution)
 
 contains
   ! =======================================================================
 
+  !> Initialize cosmology and cosmological constants
   subroutine cosmology_init (cosmo_switch)
     
     use astroconstants, only: Mpc
@@ -80,6 +91,7 @@ contains
 
   ! =======================================================================
 
+  !> Calculates the cosmological redshift for a given time
   function time2zred (time)
 
     ! Calculates the cosmological redshift for a given time
@@ -103,6 +115,7 @@ contains
 
   ! =======================================================================
 
+  !> Calculates the time for a given cosmological redshift
   function zred2time (zred1)
 
     ! Calculates the time for a given cosmological redshift
@@ -126,11 +139,13 @@ contains
 
   ! =======================================================================
 
+  !> Calculates the cosmological redshift from time
+  !! and the scale factor zfactor for use in cosmo_evol
   subroutine redshift_evol (time)
 
     ! Calculates the cosmological redshift from time
     ! and the scale factor zfactor for use in cosmo_evol
-    
+  
     ! Author: Garrelt Mellema
     ! Date: 10-Mar-2006
     ! Version: F90
@@ -155,6 +170,7 @@ contains
 
   ! =======================================================================
 
+  !> Calculates the cosmological adiabatic cooling
   real(kind=dp) function cosmo_cool (e_int)
 
     ! Calculates the cosmological adiabatic cooling
@@ -186,6 +202,7 @@ contains
 
   ! =======================================================================
 
+  !> Calculates the (cosmological) Compton cooling rate (against the CMB)
   real(kind=dp) function compton_cool (temper,eldens)
     
     ! Calculates the (cosmological) Compton cooling rate

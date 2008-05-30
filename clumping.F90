@@ -1,3 +1,13 @@
+!>
+!! \brief This module contains clumping data and routines
+!!
+!! Module for Capreole / C2-Ray (f90)
+!!
+!! \b Author: Garrelt Mellema
+!!
+!! \b Date:
+
+
 module clumping_factor
 
   use precision
@@ -6,10 +16,12 @@ module clumping_factor
 
   implicit none
 
+  !> Global clumping factor
   real(kind=dp),public :: clumping
   
 contains
 
+  !> Initializes the global clumping factor
   subroutine clumping_init()
 
 #ifdef MPI       

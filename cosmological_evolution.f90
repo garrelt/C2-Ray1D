@@ -1,6 +1,19 @@
+!>
+!! \brief This module contains routines for cosmological evolution
+!!
+!! Module for Capreole / C2-Ray (f90)
+!!
+!! \b Author: Garrelt Mellema
+!!
+!! \b Date: 04-Mar-2006
+!!
+!! The density and lengths and volumes evolve due to the expansion
+!! of the Universe
+!!
+
 module cosmological_evolution
 
-  ! This file contains routines having to do with the cosmological 
+  ! This module contains routines having to do with the cosmological 
   ! evolution of state and grid variables
   
   ! - cosmo_evol: cosmological evolution of space, density
@@ -10,13 +23,14 @@ module cosmological_evolution
   use grid, only: r,dr,vol
   use material, only: ndens
     
-
   implicit none
 
 contains
 
   ! =======================================================================
 
+  !> Calculates the cosmological evolution of space and densities\n
+  !! Changes variables: ndens, r, dr, vol
   subroutine cosmo_evol ()
 
     ! Calculates the cosmological evolution of space and densities
