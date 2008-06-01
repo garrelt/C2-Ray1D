@@ -129,7 +129,7 @@ contains
   ! =======================================================================
   
   !> Calculates the column density (of hydrogen)
-  !! for a cell of ionization fraction xh, length dr, 
+  !! for a cell of ionization fraction xh, length path, 
   !! and density ndenstime dependent ionization state for hydrogen
   function coldens(path,xh0,ndens)
     
@@ -138,8 +138,9 @@ contains
     ! and density ndens
     
     real(kind=dp) :: coldens
-    real(kind=dp),intent(in) :: path
-    real(kind=dp),intent(in) :: xh0,ndens
+    real(kind=dp),intent(in) :: path !< path length through cell
+    real(kind=dp),intent(in) :: xh0  !< neutral H fraction
+    real(kind=dp),intent(in) :: ndens !< number density of H
     
     ! Column density over a distance dr (cell)
     coldens=xh0*ndens*path
