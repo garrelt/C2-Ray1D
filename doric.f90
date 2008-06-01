@@ -1,3 +1,14 @@
+!>
+!! \brief This module contains routines for calculating the ionization evolution of a single grid point.
+!!
+!! Module for Capreole / C2-Ray (f90)
+!!
+!! \b Author: Garrelt Mellema
+!!
+!! \b Date: 
+!!
+!!
+
 module doric_module
   
   ! This module contains routines having to do with the calculation of
@@ -17,6 +28,8 @@ module doric_module
 contains
   
   !=======================================================================
+
+  !> calculates time dependent ionization state for hydrogen
   subroutine doric (dt,temp0,rhe,rhh,xfh,xfh_av,phi)
     
     ! calculates time dependent ionization state for hydrogen
@@ -39,13 +52,13 @@ contains
     use tped, only: electrondens ! should this really be used inside doric?
     use c2ray_parameters, only: epsilon
     
-    real(kind=dp),intent(in) :: dt ! time step
-    real(kind=dp),intent(in) :: temp0 ! local temperature
-    real(kind=dp),intent(inout) :: rhe ! electron density
-    real(kind=dp),intent(in) :: rhh ! H density (or total density?)
-    real(kind=dp),dimension(0:1),intent(out) :: xfh ! H ionization fractions
-    real(kind=dp),dimension(0:1),intent(inout) :: xfh_av ! H ionization fractions (time-averaged)
-    type(photrates) :: phi ! photo-ionization rates
+    real(kind=dp),intent(in) :: dt !< time step
+    real(kind=dp),intent(in) :: temp0 !< local temperature
+    real(kind=dp),intent(inout) :: rhe !< electron density
+    real(kind=dp),intent(in) :: rhh !< H density (or total density?)
+    real(kind=dp),dimension(0:1),intent(out) :: xfh !< H ionization fractions
+    real(kind=dp),dimension(0:1),intent(inout) :: xfh_av !< H ionization fractions (time-averaged)
+    type(photrates) :: phi !< photo-ionization rates
     
     real(kind=dp) :: brech0,sqrtt0,acolh0
     real(kind=dp) :: rhe0,xfh1old,xfh0old,aih0,delth,eqxfh0,eqxfh1
@@ -115,6 +128,9 @@ contains
   
   ! =======================================================================
   
+  !> Calculates the column density (of hydrogen)
+  !! for a cell of ionization fraction xh, length dr, 
+  !! and density ndenstime dependent ionization state for hydrogen
   function coldens(path,xh0,ndens)
     
     ! Calculates the column density (of hydrogen)
@@ -128,11 +144,11 @@ contains
     ! Column density over a distance dr (cell)
     coldens=xh0*ndens*path
     
-    return
   end function coldens
   
   !=======================================================================
-  
+
+  !> Sets the boundary condition for the hydrogen column density
   function coldensh_bndry()
     
     ! Sets the boundary condition for the hydrogen column density
@@ -145,7 +161,6 @@ contains
     ! Column density at the left of the first cell
     coldensh_bndry=tauHI/sigh
     
-    return
   end function coldensh_bndry
   
 end module doric_module
