@@ -1,3 +1,14 @@
+!>
+!! \brief This module contains routines for calculating the ionization and temperature evolution of the entire grid (1D).
+!!
+!! Module for Capreole / C2-Ray (f90)
+!!
+!! \b Author: Garrelt Mellema
+!!
+!! \b Date:
+!!
+!! \b Version: 1D version similar to the 3D version.
+
 module evolve
 
   ! This module contains routines having to do with the calculation of
@@ -19,13 +30,21 @@ module evolve
 
   private
 
-  public :: evolve1D
+  public :: evolve1D !< evolve 1D grid
 
-  real(kind=dp),dimension(mesh) :: coldensh_out
+  !> H column density at the back end of the cell
+  real(kind=dp),dimension(mesh) :: coldensh_out 
 
 contains
+
   ! =======================================================================
   
+  !> Calculates the evolution of the hydrogen ionization state
+  !! and temperature for the whole 1D grid\n
+  !! \b Author: Garrelt Mellema\n
+  !! \b Date: 21-Aug-2006 (f77/OMP: 13-Jun-2005)\n
+  !! \b Version: Simple 1D
+    
   subroutine evolve1D (dt)
 
     ! Calculates the evolution of the hydrogen ionization state
@@ -45,10 +64,10 @@ contains
     ! 13-Jun-2005 (HM) : OpenMP version : Hugh Merz
     ! 31-Mar-2008 (GM) : clean up.
 
-    ! The time step
+    !> The time step
     real(kind=dp),intent(in) :: dt
 
-    ! Will contains the integer position of the cell being treated
+    !> Will contains the integer position of the cell being treated
     integer,dimension(Ndim) :: pos
       
     ! Loop variables
@@ -83,6 +102,12 @@ contains
 
   !=======================================================================
 
+  !> Calculates the evolution of the hydrogen ionization state in a
+  !! single cell.\n
+  !! \b Author: Garrelt Mellema\n
+  !! \b Date: 21-Aug-2006 (20-May-2005, 5-Jan-2005, 02 Jun 2004)\n
+  !! \b Version: single source
+
   subroutine evolve0D(dt,rtpos)
     
     ! Calculates the evolution of the hydrogen ionization state in a
@@ -106,13 +131,18 @@ contains
     use c2ray_parameters, only: epsilon,convergence1,convergence2
     use material, only: isothermal
     use thermalevolution, only: thermal
-    real(kind=dp),parameter :: max_coldensh=2e19 ! column density for stopping chemisty
+
+    implicit none
+
+    real(kind=dp),parameter :: max_coldensh=2e19 !< column density for stopping chemisty
     
     logical :: falsedummy ! always false, for tests
     parameter(falsedummy=.false.)
 
-    real(kind=dp),intent(in) :: dt
-    integer,dimension(Ndim),intent(in) :: rtpos
+    !> The time step
+    real(kind=dp),intent(in) :: dt 
+    !> mesh position of cell being done
+    integer,dimension(Ndim),intent(in) :: rtpos 
     
     logical :: finalpass
     integer :: nx,nd,nit,idim ! loop counters
