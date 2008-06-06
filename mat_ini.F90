@@ -1,3 +1,19 @@
+!>
+!! \brief This module contains data and routines for handling the material properties on the grid (1D)
+!!
+!! These properties are; density, temperature, clumping, ionization fractions
+!! 
+!! \b Author: Garrelt Mellema
+!!
+!! \b Date: 
+!!
+!! \b Version:  1D test problems\n
+!! Problem 1: constant density (Strömgren problem)\n
+!! Problem 2: 1/r density\n
+!! Problem 3: 1/r^2 density (with core of radius r_core)\n
+!! Problem 4: cosmological constant density (Shapiro & Giroux problem)\n
+
+
 module material
 
   ! This module contains the grid data and routines for initializing them.
@@ -27,23 +43,34 @@ module material
   ! ndens - number density (cm^-3) of a cell
   ! temper - temperature (K) of a cell
   ! xh - ionization fractions for one cell
-  real(kind=dp) :: ndens(mesh)
-  real(kind=dp) :: temper(mesh)
-  real(kind=dp) :: xh(mesh,0:1)
-  real(kind=dp) :: clumping
-  real(kind=dp) :: r_core
-  real(kind=dp) :: dens_core
-  integer :: testnum
-  logical :: isothermal
+  real(kind=dp) :: ndens(mesh) !< number density (cm^-3) of a cell
+  real(kind=dp) :: temper(mesh) !< temperature (K) of a cell
+  real(kind=dp) :: xh(mesh,0:1) !< ionization fractions for one cell
+  real(kind=dp) :: clumping !< global clumping factor
+  real(kind=dp) :: r_core !< core radius (for problems 2 and 3) 
+  real(kind=dp) :: dens_core !< core density (for problems 2 and 3)
+  integer :: testnum !< number of test problem (1 to 4)
+  logical :: isothermal !< is the run isothermal?
   ! needed for analytical solution of cosmological Ifront
-  real(kind=dp) :: t1,eta 
+  real(kind=dp) :: t1 !< parameter for analytical solution of test 4 
+  real(kind=dp) :: eta !< parameter for analytical solution of test 4  
 
 #ifdef MPI
-  integer,private :: ierror
+  integer,private :: ierror !< MPI error flag
 #endif
 
 contains
+
   ! ============================================================================
+
+  !> Initializes material properties on grid\n
+  !! \b Author: Garrelt Mellema\n
+  !! \b Date: 20-Aug-2006 (f77 21-May-2005 (derives from mat_ini_cosmo2.f))\n
+  !! \b Version:
+  !! - 1D\n
+  !! - Four different test problems\n
+  !! - Initially completely neutral\n
+
   subroutine mat_ini (restart)
 
     ! Initializes material properties on grid
@@ -57,7 +84,7 @@ contains
     ! - Four different test problems
     ! - Initially completely neutral
 
-    integer,intent(out) :: restart ! will be /= 0 if a restart is intended
+    integer,intent(out) :: restart !< will be /= 0 if a restart is intended
 
     integer :: i,n ! loop counters
     real(kind=dp) :: dens_val

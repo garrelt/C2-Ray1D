@@ -30,7 +30,7 @@ module evolve
 
   private
 
-  public :: evolve1D !< evolve 1D grid
+  public :: evolve1D !> evolve 1D grid
 
   !> H column density at the back end of the cell
   real(kind=dp),dimension(mesh) :: coldensh_out 

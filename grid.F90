@@ -1,3 +1,12 @@
+!>
+!! \brief This module contains data and routines for handling the physical grid (1D)
+!!
+!! \b Author: Garrelt Mellema
+!!
+!! \b Date: 
+!!
+!!
+
 module grid
 
   ! Handles grid properties
@@ -14,14 +23,19 @@ module grid
   ! dr - cell size
   ! x,y,z - x,y,z coordinates
   ! vol - volume of one cell
-  real(kind=dp) :: dr
-  real(kind=dp),dimension(mesh) :: r
-  real(kind=dp),dimension(mesh) :: vol
+  real(kind=dp) :: dr !< cell size
+  real(kind=dp),dimension(mesh) :: r !< spatial cooridnate
+  real(kind=dp),dimension(mesh) :: vol !< volume of grid cell
   
 contains
 
   ! =======================================================================
 
+  !> Initializes grid properties\n
+  !! \b Author: Garrelt Mellema\n
+  !! \b Date: 20-Aug-2006 (f77 version: 15-Apr-2004)\n
+  !! \b Version: One-dimensional spherical grid
+    
   subroutine grid_ini()
     
     ! Initializes grid properties
@@ -30,13 +44,7 @@ contains
     
     ! Date: 20-Aug-2006 (f77 version: 15-Apr-2004)
     
-    ! Version:
-    ! Three-dimensional cartesian grid
-    
-    ! dr - cell size
-    ! x,y,z - x,y,z coordinates
-    ! vol - volume of one cell
-    ! contained in common block in grid.h
+    ! Version: One-dimensional spherical grid
     
     use mathconstants, only: pi
     use string_manipulation, only: convert_case

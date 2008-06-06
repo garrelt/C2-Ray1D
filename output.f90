@@ -1,3 +1,6 @@
+!>
+!! \brief This module contains routines for file output
+
 module output_module
   
   ! This file contains routines having to do with the output
@@ -14,11 +17,29 @@ module output_module
 
   implicit none
   
-  integer,parameter :: max_input_streams=5
-  integer,dimension(max_input_streams) :: streams
+  integer,parameter :: max_input_streams=5 !< maximum number of output streams
+  integer,dimension(max_input_streams) :: streams !< flags for output streams
   
 contains
   !----------------------------------------------------------------------------
+
+  !> Initializes global output (photonstatistics, analytical solution)
+  !!
+  !! Analytical: ASCII table
+  !! \li time (s)
+  !! \li Numerical position (cm)
+  !! \li Analytical position (cm)
+  !! \li Relative error between analytical and numerical
+  !! \li Uncertainty due to front width
+  !! \li Error due to finite cell size.
+  !!
+  !! PhotonCounts: ASCII table
+  !! \li time
+  !! \li Number of (ionizations + recombinations) / photons during time step
+  !! \li Number of ionizations /(ionizations + recombinations)
+  !! \li Number of recombinations /(ionizations + recombinations)
+  !! \li Number of (ionizations + recombinations) / photons 
+  !! \li Number of (ionizations + recombinations) / photons since t=0
 
   subroutine setup_output ()
     
@@ -42,6 +63,9 @@ contains
   end subroutine setup_output
   
   !-----------------------------------------------------------------------------
+
+  !> Closes global output files which have been open the entire run
+
   subroutine close_down ()
     
     ! Closes down
@@ -54,6 +78,20 @@ contains
   end subroutine close_down
   
   !----------------------------------------------------------------------------
+
+  !> produces output for a time frame. See below for format
+  !!
+  !! Output format: ASCII table
+  !! \li r-position
+  !! \li neutral hydrogen fraction
+  !! \li ionized hydrogen fraction
+  !! \li temperature
+  !! \li density
+  !!
+  !! No time information is available in the output, but the
+  !! file names are Ifront_xx.xxx.dat, where xx.xxx is the
+  !! fraction of the simulation time passed (initial condition 0.000,
+  !! last output 1.000).
 
   subroutine output (time,dt,end_time)
 
@@ -92,7 +130,9 @@ contains
     use photonstatistics
     use radiation, only: teff,rstar,lstar,S_star
 
-    real(kind=dp),intent(in) :: time,dt,end_time
+    real(kind=dp),intent(in) :: time !< current simulation time
+    real(kind=dp),intent(in) :: dt !< time step taken
+    real(kind=dp),intent(in) :: end_time !< end simulation at this time
     
     integer :: i,j,k,ns
     character(len=6) :: zred_str
@@ -150,6 +190,13 @@ contains
 
   !---------------------------------------------------------------------------
 
+  !> Calculate the location of the ionization front analytically\n
+  !! \b Authors: Erik-Jan Rijkhorst, Ilian Iliev, Garrelt Mellema\n
+  !! \b Date: 20-Oct-2004 (5-Aug-2004)\n
+  !! This routine needs several external functions:
+  !!  - LambertW(x): the LambertW function.(real argument and ouput)
+  !!  - expint(n,x): the exponentional integral of order n
+
   subroutine calc_ana_front(ana_front,time)
     !     
     !     Calculate the location of the ionization front.
@@ -166,8 +213,8 @@ contains
     use radiation
     use grid
     
-    real(kind=dp),intent(in) :: time
-    real(kind=dp),intent(out) :: ana_front
+    real(kind=dp),intent(in) :: time !< current simulation time
+    real(kind=dp),intent(out) :: ana_front !< front position
     
     real(kind=dp) :: StromgrenRadius
     real(kind=dp) :: typical_dens
@@ -243,6 +290,10 @@ contains
       
   !---------------------------------------------------------------------------
       
+  !> finds the the location of the numerical ionization front.\n
+  !! \b Author: Erik-Jan Rijkhorst\n
+  !! \b Date: 5-Aug-2004
+
   subroutine calc_num_front(num_front,xlimit)
     !     
     !     Calculate the location of the ionization front.
@@ -250,11 +301,12 @@ contains
     !     Author: Erik-Jan Rijkhorst
     !     Date: 5-Aug-2004
 
-    use grid
-    use material
+    use grid, only: r,dr
+    use material, only: xh
 
-    real(kind=dp),intent(in) :: xlimit
-    real(kind=dp),intent(out) :: num_front
+    !> ionization fraction that defines front location
+    real(kind=dp),intent(in) :: xlimit 
+    real(kind=dp),intent(out) :: num_front !< front position
       
     integer :: i, i1, i2
       
@@ -278,7 +330,9 @@ contains
   end subroutine calc_num_front
   
   !---------------------------------------------------------------------------
-      
+
+  !> Calculates LambertW function for z
+  !
   !      /* Lambert W function. 
   !      Was ~/C/LambertW.c written K M Briggs Keith dot Briggs at 
   !      bt dot com 97 May 21.  
@@ -308,7 +362,7 @@ contains
   function LambertW(z)
     
     real(kind=dp) :: LambertW
-    real(kind=dp) :: z
+    real(kind=dp),intent(in) :: z !< input value, > -0.367879
     integer i
     real(kind=dp) :: eps,em1
     parameter(eps=4.0e-16)
@@ -367,14 +421,16 @@ contains
   end function LambertW
   
 
+  !> calculates exponential integral of order n for x
+
   FUNCTION expint(n,x,etatratio)
     
 
     REAL(kind=dp) :: expint
 
-    INTEGER,intent(in) :: n
-    REAL(kind=dp),intent(in) :: x
-    REAL(kind=dp),intent(in) ::etatratio
+    INTEGER,intent(in) :: n !< order
+    REAL(kind=dp),intent(in) :: x !< argument
+    REAL(kind=dp),intent(in) ::etatratio !< asymptotic value
 
     integer,parameter :: MAXIT=100
     REAL(kind=dp),parameter :: EPS=1.e-7,FPMIN=1.e-30,EULER=.5772156649
