@@ -1,3 +1,21 @@
+!>
+!! \brief This module data and routines which deal with radiative
+!!     effects. 
+!!
+!!  Its main part deal with photo-ionizing radiation, but it
+!!     also initializes other radiative properties, such as cooling (which
+!!     are contained in different modules).
+!!     It can be used in hydrodynamic or stand-alone radiative transfer 
+!!     calculations.
+!!
+!! Module for Capreole / C2-Ray (f90)
+!!
+!! \b Author: Garrelt Mellema
+!!
+!! \b Date:
+!!
+!! \b Version: 1D version similar to the 3D version.
+
 module radiation
   
   !     This module contains data and routines which deal with radiative
@@ -44,51 +62,67 @@ module radiation
   !     NumFreqBnd - Number of frequency bands (1 for hydrogen only)
   !-----------------------------------------------------------------------
 
+  !> Number of integration points in one of the three frequency interval.
   integer,parameter :: NumFreq=128
+  !> Number of table points for the optical depth.
   integer,parameter :: NumTau=2000
+  !> Number of frequency bands (1 for hydrogen only)
   integer,parameter :: NumFreqBnd=1
   
-  ! This parameter sets the optical depth at the entrance of the grid.
-  ! It can be used if radiation enters the simulation volume from the
-  ! outside.
+  !> This parameter sets the optical depth at the entrance of the grid.
+  !> It can be used if radiation enters the simulation volume from the
+  !> outside.
   real(kind=dp) :: tauHI=0.0
 
   ! Parameters defining the optical depth entries in the table.
   ! minlogtau is log10(lowest optical depth) (table position 1)
   ! maxlogtau is log10(highest optical depth) (table position NumTau)
   ! dlogtau is the step size in log10(tau) between table entries
-  real(kind=dp),parameter :: minlogtau=-20.0
-  real(kind=dp),parameter :: maxlogtau=4.0
+  real(kind=dp),parameter :: minlogtau=-20.0 !< log10(lowest optical depth) 
+  real(kind=dp),parameter :: maxlogtau=4.0 !< log10(highest optical depth)
+  !> step size in log10(tau) between table entries
   real(kind=dp),parameter :: dlogtau=(maxlogtau-minlogtau)/real(NumTau)
 
+  !> Logical that determines the use of grey opacities
   logical,parameter :: grey=.false. ! use grey opacities?
 
   ! stellar properties
-  real(kind=dp) :: teff,rstar,lstar,S_star
+  real(kind=dp) :: teff !< Black body effective temperature
+  real(kind=dp) :: rstar !< Black body radius
+  real(kind=dp) :: lstar !< Black body luminosity
+  real(kind=dp) :: S_star !< Black body ionizing photons rate
   
   ! Photo-ionization integral cores
-  real(kind=dp),dimension(NumFreqBnd) :: steph0
-  real(kind=dp),dimension(:,:,:),allocatable  :: h0int
+  real(kind=dp),dimension(NumFreqBnd) :: steph0 !< frequency steps in table 
+  !> photo-ionization integral core for H0 (optically thick case)
+  real(kind=dp),dimension(:,:,:),allocatable  :: h0int 
+  !> photo-ionization heating integral core for H0 (optically thick case)
   real(kind=dp),dimension(:,:,:),allocatable  :: hh0int
+  !> photo-ionization integral core for H0 (optically thin case)
   real(kind=dp),dimension(:,:,:),allocatable  :: h0int1
+  !> photo-ionization heating integral core for H0 (optically thin case)
   real(kind=dp),dimension(:,:,:),allocatable  :: hh0int1
 
   ! Photo-ionization integrals (rates)
+  !> photo-ionization integral for H0 (optically thick case)
   real(kind=dp),dimension(:,:),allocatable  :: hphot
+  !> photo-ionization heating integral for H0 (optically thick case)
   real(kind=dp),dimension(:,:),allocatable  :: hheat
+  !> photo-ionization integral for H0 (optically thin case)
   real(kind=dp),dimension(:,:),allocatable  :: hphot1
+  !> photo-ionization heating integral for H0 (optically thin case)
   real(kind=dp),dimension(:,:),allocatable  :: hheat1
 
-  ! This type contains all the photo-ionization rates
-  ! The in and out rates are used to ensure photon-conservation.
-  ! See the C2-Ray paper.
+  !> This type contains all the photo-ionization rates
+  !> The in and out rates are used to ensure photon-conservation.
+  !> See the C2-Ray paper.
   type photrates
-     real(kind=dp) :: h        ! total H ionizing rate
-     real(kind=dp) :: hv_h     ! total H heating rate
-     real(kind=dp) :: h_in     ! in-rate
-     real(kind=dp) :: hv_h_in  ! in-heating rate
-     real(kind=dp) :: h_out    ! out-rate
-     real(kind=dp) :: hv_h_out ! out-heating rate
+     real(kind=dp) :: h        !< total H ionizing rate
+     real(kind=dp) :: hv_h     !< total H heating rate
+     real(kind=dp) :: h_in     !< in-rate
+     real(kind=dp) :: hv_h_in  !< in-heating rate
+     real(kind=dp) :: h_out    !< out-rate
+     real(kind=dp) :: hv_h_out !< out-heating rate
   end type photrates
 
   ! photo-ionization rates (disabled as they are passed as arguments)
@@ -104,6 +138,7 @@ contains
 
 !=======================================================================
 
+  !> initializes constants and tables for radiation processes (heating, cooling and ionization)
   subroutine rad_ini ()
 
     ! initializes constants and tables for radiation processes
@@ -139,6 +174,7 @@ contains
 
   !=======================================================================
 
+  !> Input routine: establish the ionizing spectrum
   subroutine spectrum_parms
 
     ! Input routine: establish the ionizing spectrum
@@ -241,6 +277,7 @@ contains
 
   !=======================================================================
   
+  !> Calculates properties of the black body spectrum
   subroutine spec_diag ()
 
     ! Calculates properties of spectrum
@@ -308,6 +345,7 @@ contains
   
   !=======================================================================
 
+  !> Calculates spectral integration cores
   subroutine spec_integr_cores ()
 
     ! Calculates spectral integration cores
@@ -404,6 +442,7 @@ contains
   
   ! =======================================================================
   
+  !> Calculates photo ionization integrals
   subroutine spec_integr ()
 
     ! Calculates photo ionization integrals
@@ -506,6 +545,7 @@ contains
 
   ! =======================================================================
   
+  ! Calculates photo-ionization rates
   subroutine photoion (phi,hcolum_in,hcolum_out,vol)
     
     ! Calculates photo-ionization rates
@@ -520,9 +560,11 @@ contains
 
     !use sourceprops, only: NormFlux
 
-    type(photrates),intent(out) :: phi
-    real(kind=dp),intent(in) :: hcolum_in,hcolum_out,vol
-    !integer,intent(in) :: nsrc
+    type(photrates),intent(out) :: phi !< result of the routine
+    real(kind=dp),intent(in) :: hcolum_in !< H0 column density at front side
+    real(kind=dp),intent(in) :: hcolum_out !< H0 column density at back side
+    real(kind=dp),intent(in) :: vol !< volume of shell cell is part of
+    !integer,intent(in) :: nsrc !< number of the source
 
     real(kind=dp) :: tauh_in,tauh_out
     real(kind=dp) ::  tau1,odpos1,dodpo1

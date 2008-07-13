@@ -1,3 +1,14 @@
+!>
+!! \brief This module contains routines having to do with the calculation of
+!! the thermal evolution of a single point/cell. 
+!!
+!! Module for Capreole / C2-Ray (f90)
+!!
+!! \b Author: Garrelt Mellema
+!!
+!! \b Date: 
+!!
+
 module thermalevolution
 
   ! This file contains routines having to do with the calculation of
@@ -22,6 +33,7 @@ contains
 
   !=======================================================================
 
+  !> calculates the thermal evolution of one grid point
   subroutine thermal (dt,temper,avg_temper,rhe,rhh,xh,xh_av,xh0,phi)
 
     ! calculates the thermal evolution
@@ -48,10 +60,14 @@ contains
     ! fraction of the cooling time step below which no iteration is done
     !real(kind=dp),parameter :: relative_denergy=0.1_dp    
     
-    real(kind=dp),intent(in) :: dt
-    real(kind=dp),intent(out) :: temper
-    real(kind=dp),intent(out) :: avg_temper
-    real(kind=dp),intent(in) :: rhe,rhh,xh(0:1),xh_av(0:1),xh0(0:1)
+    real(kind=dp),intent(in) :: dt !< time step
+    real(kind=dp),intent(out) :: temper !< temperature
+    real(kind=dp),intent(out) :: avg_temper !< time-averaged temperature
+    real(kind=dp),intent(in) :: rhe !< electron density
+    real(kind=dp),intent(in) :: rhh !< number density
+    real(kind=dp),intent(in) :: xh(0:1) !< H ionization fractions
+    real(kind=dp),intent(in) :: xh_av(0:1) !< time-averaged H ionization fractions
+    real(kind=dp),intent(in) :: xh0(0:1) !< initial H ionization fractions
     type(photrates),intent(in) :: phi
 
     real(kind=dp) :: temper0

@@ -1,3 +1,14 @@
+!>
+!! \brief This module contains data and subroutines for radiative cooling
+!!
+!! Module for Capreole / C2-Ray (f90)
+!!
+!! \b Author: Garrelt Mellema
+!!
+!! \b Date: 
+!!
+!! \b Version: Collisional Ionization Equilibrium cooling
+
 module radiative_cooling
 
   ! This module file contains subroutines for radiative cooling
@@ -12,9 +23,10 @@ module radiative_cooling
 
   private
 
-  integer,parameter :: temppoints=61
-  real(kind=dp),dimension(temppoints) :: cie_cool
-  real(kind=dp) :: mintemp, dtemp
+  integer,parameter :: temppoints=61 !< number of points in cooling table
+  real(kind=dp),dimension(temppoints) :: cie_cool !< CIE cooling curve
+  real(kind=dp) :: mintemp !< lowest log10(temperature) in table
+  real(kind=dp) :: dtemp !< steps in log10(temperature) in table
 
   public :: coolin, setup_cool
 
@@ -22,11 +34,15 @@ contains
   
   !===========================================================================
 
+  !> Calculate the cooling rate
   function coolin(nucldens,eldens,xh,temp0)
     
     real(kind=dp) :: coolin
     
-    real(kind=dp),intent(in) :: nucldens,eldens,xh(0:1),temp0
+    real(kind=dp),intent(in) :: nucldens !< number density
+    real(kind=dp),intent(in) :: eldens !< electron density
+    real(kind=dp),dimension(0:1),intent(in) :: xh !< H ionization fractions
+    real(kind=dp),intent(in) :: temp0 !< temperature
     
     real(kind=dp) :: tpos, dtpos
     integer :: itpos,itpos1
@@ -45,6 +61,7 @@ contains
   
   !===========================================================================
 
+  !> Read in and set up the cooling table(s)
   subroutine setup_cool ()
 
     real(kind=dp),dimension(temppoints) :: temp

@@ -1,3 +1,14 @@
+!>
+!! \brief This module handles the calculation of the photon statistics
+!!
+!! Module for C2-Ray (f90)
+!!
+!! \b Author: Garrelt Mellema
+!!
+!! \b Date: 26-Sep-2006
+!!
+!!
+
 module photonstatistics
   
   ! This module handles the calculation of the photon statistics
@@ -22,17 +33,24 @@ module photonstatistics
   !use subgrid_clumping, only: clumping
 
   logical,parameter :: do_photonstatistics=.true.
-  real(kind=dp) :: totrec
-  real(kind=dp) :: totcollisions
-  real(kind=dp) :: dh0
-  real(kind=dp) :: total_ion
-  real(kind=dp) :: grtotal_ion
-  real(kind=dp) :: photon_loss
+  real(kind=dp) :: totrec !< total number of recombinations
+  real(kind=dp) :: totcollisions !< total number of collisional ionizations
+  real(kind=dp) :: dh0 !< change in the number of neutral Hs
+  real(kind=dp) :: total_ion !< total number of ionizations 
+  real(kind=dp) :: grtotal_ion !< total number of ionization since start
+  real(kind=dp) :: photon_loss !< photons lost from the grid
 
-  real(kind=dp),private :: h0_before,h0_after,h1_before,h1_after
-  integer,private :: i,j,k
+  real(kind=dp),private :: h0_before !< number of neutral H at begin of time step
+  real(kind=dp),private :: h0_after !< number of neutral H at end of time step
+  real(kind=dp),private :: h1_before !< number of ionized H at begin of time step
+  real(kind=dp),private :: h1_after !< number of ionized H at end of time step
+  integer,private :: i !< mesh loop variable
+  integer,private :: j !< mesh loop variable
+  integer,private :: k !< mesh loop variable
 
 contains
+
+  !> initializes the grand total of ionization to zero
   subroutine initialize_photonstatistics ()
 
     ! set total number of ionizing photons used to zero
@@ -40,9 +58,10 @@ contains
 
   end subroutine initialize_photonstatistics
 
+  !> Calculates the photon statistics
   subroutine calculate_photon_statistics (dt)
 
-    real(kind=dp),intent(in) :: dt
+    real(kind=dp),intent(in) :: dt !< time step
 
     ! Call the individual routines needed for this calculation
 
@@ -52,6 +71,7 @@ contains
     
   end subroutine calculate_photon_statistics
 
+  !> Calculates the number of neutrals and ions at the start of the time step
   subroutine state_before ()
 
     ! Photon statistics: calculate the number of neutrals before integration
@@ -64,9 +84,10 @@ contains
     
   end subroutine state_before
 
+  !> Calculates total number of recombinations and collisions
   subroutine total_rates(dt)
 
-    real(kind=dp),intent(in) :: dt
+    real(kind=dp),intent(in) :: dt !< time step
 
     real(kind=dp),dimension(0:1) :: yh
  
@@ -91,6 +112,7 @@ contains
 
   end subroutine total_rates
   
+  !> Calculates the number of neutrals and ions at the end of the time step
   subroutine state_after()
     
     ! Photon statistics: Calculate the number of neutrals after the integration
@@ -103,6 +125,7 @@ contains
     
   end subroutine state_after
   
+  !> Calculates the total number of ionizations during a time step
   subroutine total_ionizations ()
     
     ! Photon statistics: Total number of new ionizations

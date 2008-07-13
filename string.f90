@@ -1,6 +1,13 @@
+!>
+!! \brief This module contains routines for string manipulation
+!!
+!! \b Author: Garrelt Mellema
+!!
+!! \b Date: August 17, 1989	
+
 module string_manipulation
 
-  IMPLICIT NONE
+  implicit none
     
 contains
   
@@ -25,10 +32,12 @@ contains
 !
 !------------------------------------------------------------------------------
 
+  !>  This routine receives a character string, changes the case of letters and 
+  !>  returns the new string.
   subroutine convert_case (string,direction)
     
-    CHARACTER (LEN = *),intent(inout) :: string
-    integer,intent(in) :: direction
+    CHARACTER (LEN = *),intent(inout) :: string !< input string
+    integer,intent(in) :: direction !< direction of conversion: 0 = upper to lower, 1 = lower to upper.
 
     INTEGER :: i, upper_to_lower, len_string
     
