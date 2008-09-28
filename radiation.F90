@@ -551,12 +551,11 @@ contains
     ! Calculates photo-ionization rates
     
     ! Author: Garrelt Mellema
-    ! Date: 11-May-2005 (f90) (18 feb 2004
+    ! Date: 28-Sep-2008 (11-May-2005 (f90) (18 feb 2004)
     
     ! Version:
-    ! Simplified version derived from Coral version, for testing
-    ! photon conservation. Only hydrogen is dealt with, and
-    ! one frequency band is used.
+    ! Simplified version derived from Coral version.
+    ! Only hydrogen is dealt with, and one frequency band is used.
 
     !use sourceprops, only: NormFlux
 
@@ -582,17 +581,17 @@ contains
     dodpo1=odpos1-real(iodpo1,dp)
     iodp11=min(NumTau,iodpo1+1)
     
+    ! Find the hydrogen photo-ionization rate (ingoing)
+    ! Since all optical depths are hydrogen, we can use
+    ! tau1 for all.
+    phi%h_in=(hphot(iodpo1,1)+ &
+         (hphot(iodp11,1)-hphot(iodpo1,1))*dodpo1)
+    if (.not.isothermal) phi%hv_h_in= &
+         (hheat(iodpo1,1)+(hheat(iodp11,1)-hheat(iodpo1,1))*dodpo1)
+
     ! Test for optically thick/thin case
     if (abs(tauh_out-tauh_in).gt.1e-2) then 
        
-       ! Find the hydrogen photo-ionization rate (ingoing)
-       ! Since all optical depths are hydrogen, we can use
-       ! tau1 for all.
-       phi%h_in=(hphot(iodpo1,1)+ &
-            (hphot(iodp11,1)-hphot(iodpo1,1))*dodpo1)
-       if (.not.isothermal) phi%hv_h_in= &
-            (hheat(iodpo1,1)+(hheat(iodp11,1)-hheat(iodpo1,1))*dodpo1)
-    
        ! find the table positions for the optical depth (outgoing)
        tau1=log10(max(1.0e-20_dp,tauh_out))
        ! odpos1=min(1.0d0*NumTau,max(0.0d0,1.0d0+(tau1-minlogtau)/
@@ -612,20 +611,19 @@ contains
        phi%h=(phi%h_in-phi%h_out)/vol
        if (.not.isothermal) phi%hv_h=(phi%hv_h_in-phi%hv_h_out)/vol
        
-    else
+    else ! optically thin case
        
-       ! Find the hydrogen photo-ionization rate (ingoing)
+       ! Find the hydrogen photo-ionization rate for the optically thin
+       ! case, and from this derive the outgoing rate.
        ! Since all optical depths are hydrogen, we can use
        ! tau1 for all.
-       phi%h_in=( &
-            hphot1(iodpo1,1)+(hphot1(iodp11,1)-hphot1(iodpo1,1))*dodpo1)
-       phi%h=phi%h_in*sigh*(hcolum_out-hcolum_in)/vol
+       phi%h=(tauh_out-tauh_in)*( &
+            hphot1(iodpo1,1)+(hphot1(iodp11,1)-hphot1(iodpo1,1))*dodpo1)/vol
        phi%h_out=phi%h_in-phi%h*vol
 
        if (.not.isothermal) then
-          phi%hv_h_in=( &
-               hheat1(iodpo1,1)+(hheat1(iodp11,1)-hheat1(iodpo1,1))*dodpo1)
-          phi%hv_h=phi%hv_h_in*sigh*(hcolum_out-hcolum_in)/vol
+          phi%hv_h=(tauh_out-tauh_in)*( &
+               hheat1(iodpo1,1)+(hheat1(iodp11,1)-hheat1(iodpo1,1))*dodpo1)/vol
           phi%hv_h_out=phi%hv_h_in-phi%hv_h*vol
        endif
 
