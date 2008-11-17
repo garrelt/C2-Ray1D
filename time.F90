@@ -23,7 +23,9 @@ module times
   real(kind=dp),public :: end_time !< End time of simulation
   real(kind=dp),public :: dt !< Time step
   real(kind=dp),public :: output_time !< Time interval between outputs
-  
+
+  public :: time_ini
+
 contains
 
   ! =======================================================================

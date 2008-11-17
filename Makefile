@@ -1,18 +1,22 @@
 # F90 compiler
 #F90 = mpif90
-F90 = ifort
-#F90 = gfortran
+#F90 = ifort
+F90 = gfortran
 #F90 = f90
 #F90 = pf90
 #LDR     = $(F90)
 
 # ifort options
-IFORTFLAGS = -O3 -vec_report -u -fpe0 -ipo -DIFORT
+#IFORTFLAGS = -O3 -vec_report -u -fpe0 -ipo -DIFORT
 #IFORTFLAGS = -g -C -traceback -fpe0 -DIFORT
 #IFORTFLAGS = -g -C -DIFORT
+GFORTFLAGS = -O
+
 #F90FLAGS1 = $(IFORTFLAGS) 
-F90FLAGS1 = -xW $(IFORTFLAGS) 
+#F90FLAGS1 = -xW $(IFORTFLAGS) 
 #F90FLAGS1 = -xB $(IFORTFLAGS) 
+F90FLAGS1 = $(GFORTFLAGS) 
+
 #F90FLAGS = $(F90FLAGS1) -openmp -DMPI
 #F90FLAGS = $(F90FLAGS1) -DMPI
 #F90FLAGS = $(F90FLAGS1)
@@ -41,7 +45,7 @@ UTILS=romberg.o string.o
 CONSTANTS = mathconstants.o cgsconstants.o  cgsphotoconstants.o  cgsastroconstants.o c2ray_parameters.o abundances.o atomic.o
 
 C2Ray_1D: precision.o $(CONSTANTS) $(UTILS) file_admin.o sizes.o no_mpi.o file_admin.o grid.o tped.o  cosmology.o mat_ini.o cooling.o radiation.o thermal.o time.o doric.o photonstatistics.o cosmological_evolution.o evolve.o output.o C2Ray.o
-	$(F90) $(OPTIONS) -o $@ precision.o $(UTILS) file_admin.o sizes.o no_mpi.o file_admin.o grid.o tped.o  cosmology.o mat_ini.o cooling.o radiation.o thermal.o time.o doric.o photonstatistics.o cosmological_evolution.o  evolve.o output.o C2Ray.o
+	$(F90) $(OPTIONS) -o $@ precision.o $(UTILS) file_admin.o sizes.o no_mpi.o grid.o tped.o  cosmology.o mat_ini.o cooling.o radiation.o thermal.o time.o doric.o photonstatistics.o cosmological_evolution.o  evolve.o output.o C2Ray.o
 
 clean : 
 	rm -f *.o *.mod *.l *.il

@@ -28,7 +28,7 @@ contains
 
   !=======================================================================
 
-  !> find temperature from pressure
+  !> \brief find temperature from pressure
   function temper2pressr (temper,ndens,eldens) result(pressr)
     
     real(kind=dp),intent(in) :: ndens !< number density
@@ -45,7 +45,7 @@ contains
 
   ! =======================================================================
 
-  !> find pressure from temperature
+  !> \brief find pressure from temperature
   function pressr2temper (pressr,ndens,eldens) result(temper)
 
     real(kind=dp),intent(in) :: pressr !< pressure
@@ -62,7 +62,7 @@ contains
       
   ! =======================================================================
 
-  !> find electron density
+  !> \brief find electron density
   function electrondens(ndens,xh)
       
     real(kind=dp) :: electrondens 
@@ -75,7 +75,7 @@ contains
 
   ! =======================================================================
 
-  !> Find number density from mass density
+  !> \brief Find number density from mass density
   function rho2n(rho)
       
     ! Calculates number density from mass density
@@ -89,7 +89,7 @@ contains
 
   ! =======================================================================
 
-  !> Find mass density from number density
+  !> \brief Find mass density from number density
   function n2rho(ndens)
       
     ! Calculates number density from mass density

@@ -42,7 +42,7 @@ Program C2Ray
   use material, only: mat_ini, testnum
   use times, only: time_ini
   use evolve, only: evolve1D
-  use file_admin, only:stdinput
+  use file_admin, only:stdinput, flag_for_file_input
   use times, only: end_time,dt,output_time
 
 #ifdef XLF
@@ -88,6 +88,7 @@ Program C2Ray
      if (rank == 0) then
         write(*,*) 'reading input from ',trim(adjustl(inputfile))
         open(unit=stdinput,file=inputfile)
+        call flag_for_file_input(.true.)
      endif
   endif
 
