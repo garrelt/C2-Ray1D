@@ -24,7 +24,7 @@ module cosmology
 
   use precision, only: dp
   use my_mpi
-  use file_admin, only: stdinput
+  use file_admin, only: stdinput, file_input
 
   ! use cosmology_parameters
 
@@ -61,11 +61,11 @@ contains
     if (cosmological) then
        ! Ask for cosmological parameters
        if (rank == 0) then
-          write(*,'(A,$)') 'Initial redshift?'
+          if (.not.file_input) write(*,'(A,$)') 'Initial redshift?'
           read(stdinput,*) zred0
-          write(*,'(A,$)') 'Hubble constant? (0-1)'
+          if (.not.file_input) write(*,'(A,$)') 'Hubble constant? (0-1)'
           read(stdinput,*) h         
-          write(*,'(A,$)') 'Density parameter Omega0?'
+          if (.not.file_input) write(*,'(A,$)') 'Density parameter Omega0?'
           read(stdinput,*) Omega0
        endif
 #ifdef MPI
@@ -110,7 +110,6 @@ contains
     ! Calculate the redshift
     time2zred = -1+(1.+zred_t0)*(t0/(t0+time))**(2./3.)
 
-    return
   end function time2zred
 
   ! =======================================================================
@@ -134,7 +133,6 @@ contains
     ! Calculate the redshift
     zred2time = t0*( ((1.0+zred_t0)/(1.0+zred1))**1.5 - 1.0 )
 
-    return
   end function zred2time
 
   ! =======================================================================
