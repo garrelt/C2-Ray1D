@@ -13,7 +13,7 @@ module times
 
   use precision, only: dp
   use my_mpi
-  use file_admin, only: stdinput
+  use file_admin, only: stdinput, file_input
   use astroconstants, only: YEAR
 
   implicit none
@@ -50,18 +50,18 @@ contains
 
     if (rank == 0) then
        ! Ask for end time
-       write(*,'(A,$)') 'Enter end time of calculation (years): '
+       if (.not.file_input) write(*,'(A,$)') 'Enter end time of calculation (years): '
        read(stdinput,*) end_time_yrs
 
        !  Convert to seconds
        end_time=end_time_yrs*YEAR
 
        ! Ask for number of time steps
-       write(*,'(A,$)') 'Enter number of time steps: '
+       if (.not.file_input) write(*,'(A,$)') 'Enter number of time steps: '
        read(stdinput,*) number_timesteps
 
        ! Ask for interval between outputs
-       write(*,'(A,$)') 'Enter time interval between outputs (years): '
+       if (.not.file_input) write(*,'(A,$)') 'Enter time interval between outputs (years): '
        read(stdinput,*) output_time_yrs
        ! Convert to seconds
        output_time=output_time_yrs*YEAR
