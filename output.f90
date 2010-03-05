@@ -185,7 +185,6 @@ contains
 
     endif
     
-    return
   end subroutine output
 
   !---------------------------------------------------------------------------
@@ -493,7 +492,7 @@ contains
        enddo
        pause 'series failed in expint'
     endif
-    return
+
   END FUNCTION expint
   !  (C) Copr. 1986-92 Numerical Recipes Software 
 

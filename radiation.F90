@@ -44,7 +44,7 @@ module radiation
 
   use precision, only: dp
   use my_mpi
-  use file_admin, only: logf
+  use file_admin, only: logf, file_input
   use mathconstants, only: pi
   use cgsconstants, only: sigmasb, hplanck, kb, tpic2
   use cgsphotoconstants, only: frth0, frtop1, frtop2, sh0, betah0, sigh
@@ -182,7 +182,7 @@ contains
     ! Author: Garrelt Mellema
     ! Update: 18-Feb-2004
 
-    use file_admin, only: stdinput
+    use file_admin, only: stdinput, file_input
     
     integer :: nchoice
     real(kind=dp) :: totflux
@@ -196,13 +196,13 @@ contains
     ! Note that it is assumed that if teff_nominal is set, 
     ! S_star_nominal is ALSO set.
     if (rank == 0 .and. teff_nominal == 0.0) then
-       write(*,'(A)') ' '
+       if (.not.file_input) write(*,'(A)') ' '
        teff=0.0
-       do while (teff.lt.2000.0.or.teff.gt.200000.) 
-          write(*,'(A,$)') 'Give black body effective temperature: '
+       do while (teff < 2000.0 .or. teff > 200000.) 
+          if (.not.file_input) write(*,'(A,$)') 'Give black body effective temperature: '
           read(stdinput,*) teff
-          write(*,*)
-          if (teff.lt.2000.0.or.teff.gt.200000.) then
+          if (.not.file_input) write(*,*)
+          if (teff < 2000.0 .or. teff > 200000.) then
              write(*,*) 'Error: Effective temperature out of range. Try again'
              write(*,*) 'Valid range: 2000 to 200,000'
           endif
@@ -212,21 +212,23 @@ contains
        totflux=sigmasb*teff**4
        
        ! b) Luminosity, radius, or ionizing photon rate?
-       write(*,'(A)') ' '
-       write(*,'(A)') 'You can specify' 
-       write(*,'(A)') ' 1) a stellar radius'
-       write(*,'(A)') ' 2) a luminosity'
-       write(*,'(A)') ' 3) Total number of ionizing photons'
+       if (.not.file_input) then
+          write(*,'(A)') ' '
+          write(*,'(A)') 'You can specify' 
+          write(*,'(A)') ' 1) a stellar radius'
+          write(*,'(A)') ' 2) a luminosity'
+          write(*,'(A)') ' 3) Total number of ionizing photons'
+       endif
        nchoice=0
        do while (nchoice <= 0 .or. nchoice > 3)
-          write(*,'(A,$)') 'Preferred option (1, 2 or 3): '
+          if (.not.file_input) write(*,'(A,$)') 'Preferred option (1, 2 or 3): '
           read(stdinput,*) nchoice
           if (nchoice <= 0 .or. nchoice > 3) then
              write(*,*) 'Error: Choose between 1 2 or 3'
           endif
        enddo
        if (nchoice.eq.1) then
-          write(*,'(A,$)') 'Give radius in solar radii: '
+          if (.not.file_input) write(*,'(A,$)') 'Give radius in solar radii: '
           read(stdinput,*) rstar
           rstar=rstar*r_solar
           lstar=rstar*rstar*(4.0d0*pi*totflux)
@@ -234,7 +236,7 @@ contains
           ! determined in spec_diag routine
           S_star=0.0
        elseif (nchoice .eq. 2) then
-          write(*,'(A,$)') 'Give luminosity in solar luminosities: '
+          if (.not.file_input) write(*,'(A,$)') 'Give luminosity in solar luminosities: '
           read(stdinput,*) lstar
           lstar=lstar*l_solar
           rstar=dsqrt(lstar/(4.0d0*pi*totflux))
@@ -242,7 +244,7 @@ contains
           ! determined in spec_diag routine
           S_star=0.0
        else
-          write(*,'(A,$)') 'Give S_* (ionizing photons s^-1): '
+          if (.not.file_input) write(*,'(A,$)') 'Give S_* (ionizing photons s^-1): '
           read(stdinput,*) S_star
           ! Assign some fiducial values, these are scaled to correspond 
           ! to S_star in routine spec_diag
