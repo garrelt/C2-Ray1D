@@ -24,7 +24,7 @@ module evolve
   use grid, only: r,vol,dr
   use material, only: ndens, xh, temper
   use photonstatistics, only: state_before, calculate_photon_statistics, &
-       photon_loss
+       photon_loss, report_photonstatistics
 
   implicit none
 
@@ -32,6 +32,8 @@ module evolve
 
   public :: evolve1D !> evolve 1D grid
 
+  !> Time-averaged H ionization fraction
+  real(kind=dp),dimension(mesh,0:1) :: xh_av
   !> H column density at the back end of the cell
   real(kind=dp),dimension(mesh) :: coldensh_out 
 
@@ -79,7 +81,7 @@ contains
     ! End of declarations
 
     ! Initial state (for photon statistics)
-    call state_before ()
+    call state_before (xh)
 
     ! reset photon loss counter
     photon_loss=0.0
@@ -94,11 +96,10 @@ contains
     end do
 
     ! Calculate photon statistics
-    call calculate_photon_statistics (dt)
+    call calculate_photon_statistics (dt,xh,xh_av)
+    call report_photonstatistics (dt)
 
-    return
   end subroutine evolve1D
-
 
   !=======================================================================
 
@@ -240,7 +241,7 @@ contains
             abs(temper1-temper2)/temper1.lt.convergence) exit
        
        ! Warn about non-convergence
-       if (nit.gt.5000) then
+       if (nit > 5000) then
           write(logf,*) 'Convergence failing'
           write(logf,*) 'xh: ',yh_av(0),yh_av0
           write(logf,*) 'temper: ',temper1,temper2
@@ -264,6 +265,11 @@ contains
     if (pos(1).eq.mesh) &
          photon_loss=photon_loss+ &
          phi%h_out*vol(pos(1))/vol_ph
+
+    ! Copy ion fractions to the global arrays.
+    do nx=0,1
+       xh_av(pos(1),nx)=yh_av(nx)
+    enddo
 
   end subroutine evolve0D
 
