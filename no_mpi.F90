@@ -1,25 +1,19 @@
 !>
 !! \brief This module contains data and routines for MPI parallelization
 !!
-!! Module for Capreole (3D)\n
-!! \b Author: Garrelt Mellema\n
-!! \b Date: 2003-06-01\n
-!! This module is also accepted by the F compiler (Dec 9, 2003)\n
+!! Module for C2Ray / Capreole (3D)
+!!
+!! \b Author: Garrelt Mellema
+!!
+!! \b Date: 2010-03-04
+!!
 !! \b Version: This is a dummy module for systems where there is no MPI for F90.
+!!
+!! This module is also accepted by the F compiler (Dec 9, 2003)\n
 
 module my_mpi
 
-  ! Module for Capreole (3D)
-  ! Author: Garrelt Mellema
-  ! Date: 2003-06-01
-  ! This module is also accepted by the F compiler (Dec 9, 2003)
- 
-  ! This is a dummy module for systems where there is no MPI
-  ! for F90.
-  !
-  !----------------------------------------------------------------------------
-
-  use file_admin, only: logf
+  use file_admin, only: logf, results_dir
 
 #ifdef XLF
   USE XLFUTILITY, only: hostnm => hostnm_ , flush => flush_
@@ -27,29 +21,36 @@ module my_mpi
 
 #ifdef IFORT
   USE IFPORT, only: hostnm, flush
-  !$ USE OMP_LIB, only: omp_get_num_threads, omp_get_thread_num
+#ifdef _OPENMP
+  USE OMP_LIB, only: omp_get_num_threads, omp_get_thread_num
 #endif
-
+#endif
+  
   implicit none
 
-  integer,parameter,public :: NPDIM=1 !< dimension of problem
+  integer,parameter,public :: NPDIM=3 !< dimension of problem
 
-  integer,public :: rank            !< rank of the processor
-  integer,public :: npr             !< number of processors
+  ! All of these are set to be consistent with the MPI version
+  integer,public :: rank              !< rank of the processor
+  integer,public :: npr               !<< number of processors
   integer,public :: nthreads        !< number of threads (per processor)
-  integer,public :: MPI_COMM_NEW    !< the (new) communicator
+  integer,public :: MPI_COMM_NEW      !< the (new) communicator (dummy)
 
-  integer,dimension(NPDIM),public :: dims !< number of processors in each dimension
+  integer,dimension(NPDIM),public :: dims !< number of processors in each dimension (dummy)
+  integer,dimension(NPDIM),public :: grid_struct !< coordinates of the processors in the grid (dummy)
 
-  !> coordinates of the processors in the grid
-  integer,dimension(NPDIM),public :: grid_struct 
-
-  
   integer,public ::  nbrleft,nbrright  !< left and right neighbours
   integer,public ::  nbrdown,nbrup     !< up and down neighbours 
   integer,public ::  nbrabove,nbrbelow !< above and below neighbours 
 
-  integer,parameter,public :: MPI_PROC_NULL=-1 !< dummy variable
+  integer,parameter,public :: MPI_PROC_NULL=-1
+
+#ifdef SUN
+  integer :: hostnm
+#endif
+
+  public :: mpi_setup,mpi_end
+  private :: mpi_basic,mpi_topology,fnd2dnbrs
 
 contains
 
@@ -58,10 +59,10 @@ contains
   !> Sets up MPI, this routine is normally the one called.\n
   !! It opens log files, reports on machine name, and calls 
   !! mpi_basic and mpi_topology to set up the MPI communicator.
-  
+
   subroutine mpi_setup ( )
 
-    character(len=10) :: filename        ! name of the log file
+    character(len=512) :: filename        ! name of the log file
     character(len=4) :: number
     integer :: ierror
     integer :: tn
@@ -71,8 +72,9 @@ contains
 
     ! Open processor dependent log file
     if (logf /= 6) then
-       filename=trim(adjustl("C2Ray.log"//trim(adjustl(number))))
-       open(unit=logf,file=filename,status="unknown",action="write")
+       filename=trim(adjustl(trim(adjustl(results_dir))//"C2Ray.log"))
+       open(unit=logf,file=filename,status="unknown",action="write", &
+            position="append")
     endif
     write(unit=logf,fmt="(A)") "Log file for C2-Ray run"
 
@@ -88,17 +90,23 @@ contains
 
     ! Report number of OpenMP threads
     !$omp parallel default(shared)
-    !$nthreads=omp_get_num_threads()
+#ifdef _OPENMP
+    nthreads=omp_get_num_threads()
+#endif
     !$omp end parallel
-    !$write(logf,*) ' Number of OpenMP threads is ',nthreads
+#ifdef _OPENMP
+    write(logf,*) ' Number of OpenMP threads is ',nthreads
+#endif
 
     ! Let OpenMP threads report
-    !$omp parallel default(shared)
-    !$tn=omp_get_thread_num()+1
-    !$write(logf,*) 'Thread number ',tn,' reporting'
+    !$omp parallel default(private)
+#ifdef _OPENMP
+    tn=omp_get_thread_num()+1
+    write(logf,*) 'Thread number ',tn,' reporting'
+#endif
     !$omp end parallel
 
-    call flush(logf)
+    flush(logf)
 
     call mpi_topology ()
 
@@ -121,6 +129,7 @@ contains
 
   !> Creates a new topology (for domain decomposition). Here (no MPI) it just
   !! defines the communicator as 0.
+
   subroutine mpi_topology ( )
 
 
@@ -173,3 +182,4 @@ contains
   end subroutine fnd2dnbrs
 
 end module my_mpi
+
