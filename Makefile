@@ -44,8 +44,8 @@ UTILS=romberg.o string.o
 
 CONSTANTS = mathconstants.o cgsconstants.o  cgsphotoconstants.o  cgsastroconstants.o c2ray_parameters.o abundances.o atomic.o
 
-C2Ray_1D: precision.o $(CONSTANTS) $(UTILS) file_admin.o sizes.o no_mpi.o file_admin.o grid.o tped.o  cosmology.o mat_ini.o cooling.o radiation.o thermal.o time.o doric.o photonstatistics.o cosmological_evolution.o evolve.o output.o C2Ray.o
-	$(F90) $(OPTIONS) -o $@ precision.o $(UTILS) file_admin.o sizes.o no_mpi.o grid.o tped.o  cosmology.o mat_ini.o cooling.o radiation.o thermal.o time.o doric.o photonstatistics.o cosmological_evolution.o  evolve.o output.o C2Ray.o
+C2Ray_1D: precision.o $(CONSTANTS) $(UTILS) file_admin.o sizes.o no_mpi.o clocks.o file_admin.o grid.o tped.o  cosmology.o material.o cooling.o radiation.o thermal.o time.o doric.o photonstatistics.o cosmological_evolution.o evolve.o output.o C2Ray.o
+	$(F90) $(OPTIONS) -o $@ precision.o $(UTILS) file_admin.o sizes.o no_mpi.o clocks.o grid.o tped.o  cosmology.o material.o cooling.o radiation.o thermal.o time.o doric.o photonstatistics.o cosmological_evolution.o  evolve.o output.o C2Ray.o
 
 clean : 
 	rm -f *.o *.mod *.l *.il
