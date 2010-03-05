@@ -56,7 +56,6 @@ contains
          xh(1)*(h1_cool(itpos)+ &
          (h1_cool(itpos1)-h1_cool(itpos))*dtpos))
     
-    return
   end function coolin
 
   !===========================================================================
@@ -104,7 +103,6 @@ contains
        h1_cool(itemp)=10.0d0**h1_cool(itemp)
     enddo
 
-    return
   end subroutine setup_cool
   
 end module radiative_cooling

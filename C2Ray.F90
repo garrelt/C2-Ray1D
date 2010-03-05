@@ -31,6 +31,8 @@ Program C2Ray
   ! evolve : evolve grid in time
 
   use precision, only: dp
+  use clocks, only: setup_clocks, update_clocks, report_clocks
+  use file_admin, only: stdinput, logf, file_input, flag_for_file_input
   use astroconstants, only: YEAR
   use my_mpi, only: mpi_setup, mpi_end, rank
   use output_module, only: setup_output,output,close_down
@@ -40,10 +42,8 @@ Program C2Ray
        time2zred, zred2time, zred, cosmological
   use cosmological_evolution, only: cosmo_evol
   use material, only: mat_ini, testnum
-  use times, only: time_ini
+  use times, only: time_ini, end_time,dt,output_time
   use evolve, only: evolve1D
-  use file_admin, only:stdinput, flag_for_file_input
-  use times, only: end_time,dt,output_time
 
 #ifdef XLF
   USE XLFUTILITY, only: iargc, getarg, flush => flush_
@@ -51,52 +51,45 @@ Program C2Ray
 
   implicit none
 
-  ! CPU time variables
-  real :: tstart !< Start time for CPU report
-  real :: tend !< End time for CPU report
-
-  ! Wall clock time variables
-  integer :: cntr1 !< Start time wall clock
-  integer :: cntr2 !< End time wall clock
-  integer :: countspersec !< counts per second (for wall clock time)
-
   ! 
   integer :: nstep
   integer :: restart,nz,flag
 
   ! Time variables
-  real(kind=dp) :: time !< actual time (s)
+  real(kind=dp) :: sim_time !< actual time (s)
   real(kind=dp) :: next_output_time !< time of next output (s)
   real(kind=dp) :: actual_dt !< actual time step (s)
 
   !> Input file
   character(len=512) :: inputfile
 
-  ! Initialize cpu timer
-  call cpu_time(tstart)
-
-  ! Initialize wall cock times
-  call system_clock(cntr1)
+  ! Initialize clocks (cpu and wall)
+  call setup_clocks
 
   ! Set up MPI structure
   call mpi_setup()
 
   ! Set up input stream (either standard input or from file given
   ! by first argument)
-  if (iargc() > 0) then
-     call getarg(1,inputfile)
-     if (rank == 0) then
-        write(*,*) 'reading input from ',trim(adjustl(inputfile))
+  if (rank == 0) then
+     write(logf,*) "input or input?"
+     flush(logf)
+     if (COMMAND_ARGUMENT_COUNT () > 0) then
+        call GET_COMMAND_ARGUMENT(1,inputfile)
+        write(logf,*) "reading input from ",trim(adjustl(inputfile))
         open(unit=stdinput,file=inputfile)
         call flag_for_file_input(.true.)
+     else
+        write(logf,*) "reading input from command line"
      endif
+     flush(logf)
   endif
 
   ! Initialize output
-  call setup_output()
+  call setup_output ()
 
   ! Initialize grid
-  call grid_ini()
+  call grid_ini ()
 
   ! Initialize the material properties
   call mat_ini (restart)
@@ -108,39 +101,39 @@ Program C2Ray
   call time_ini ()
 
   ! Set time to zero
-  time=0.0
+  sim_time=0.0
   next_output_time=0.0
 
   ! Initialize cosmology
   if (cosmological) then
-     call redshift_evol(time)
+     call redshift_evol(sim_time)
      call cosmo_evol( )
      write(*,*) zred
   endif
-  !call cosmology_init(zred_array(1),time)
+  !call cosmology_init(zred_array(1),sim_time)
 
   ! Loop until end time is reached
   nstep=0
   do
   
      ! Write output
-     if (abs(time-next_output_time).le.1e-6*time) then
-        call output(time,dt,end_time)
+     if (abs(sim_time-next_output_time).le.1e-6*sim_time) then
+        call output(sim_time,dt,end_time)
         next_output_time=next_output_time+output_time
      endif
      
      ! Make sure you produce output at the correct time
      ! dt=YEAR*10.0**(min(5.0,(-2.0+real(nstep)/1e5*10.0)))
-     actual_dt=min(next_output_time-time,dt)
+     actual_dt=min(next_output_time-sim_time,dt)
      nstep=nstep+1
 
      ! Report time and time step
-     write(30,'(A,2(1pe10.3,1x),A)') 'Time, dt:', &
-          time/YEAR,actual_dt/YEAR,' (years)'
+     write(logf,'(A,2(1pe10.3,1x),A)') 'Time, dt:', &
+          sim_time/YEAR,actual_dt/YEAR,' (years)'
      
      ! For cosmological simulations evolve proper quantities
      if (cosmological) then
-        call redshift_evol(time+0.5*actual_dt)
+        call redshift_evol(sim_time+0.5*actual_dt)
         call cosmo_evol()
      endif
 
@@ -148,30 +141,30 @@ Program C2Ray
      call evolve1D(actual_dt)
 
      ! Update time
-     time=time+actual_dt
+     sim_time=sim_time+actual_dt
             
-     if (abs(time-end_time).lt.1e-6*end_time) exit
+     if (abs(sim_time-end_time).lt.1e-6*end_time) exit
+
+     ! Update clock counters (cpu + wall, to avoid overflowing the counter)
+     call update_clocks ()
+
   enddo
 
   ! stop
   ! Scale to the current redshift
   if (cosmological) then
-     call redshift_evol(time)
+     call redshift_evol(sim_time)
      call cosmo_evol()
   endif
 
   ! Write final output
-  call output(time,dt,end_time)
+  call output(sim_time,dt,end_time)
 
   ! Clean up some stuff
   call close_down ()
   
-  ! Find out CPU time
-  call cpu_time(tend)
-  call system_clock(cntr2,countspersec)
-
-  write(30,*) 'CPU time: ',tend-tstart,' s'
-  write(30,*) 'Wall clock time: ',(cntr2-cntr1)/countspersec,' s'
+  ! Report clocks (cpu and wall)
+  call report_clocks ()
 
   ! End the run
   call mpi_end ()
