@@ -1,26 +1,31 @@
 !>
 !! \brief This module contains data and routines for cosmological problems
 !!
-!! Module for Capreole / C2-Ray (f90)
+!! Module for Capreole / C2-Ray (F90)
 !!
 !! \b Author: Garrelt Mellema
 !!
-!! \b Date: 
+!! \b Date: 2010-03-08 (but older than that)
 !!
-!! This module keeps track of the current redshift
+!! This module initializes the cosmology and contains functions for changing
+!! redshift to time and vice versa. It also contains cosmological cooling
+!! routines. Note that it does not evolve the proper lengths, volumes and
+!! densities. This is done in the cosmological_evolution module.
+!!
+!! List of routines:
+!! - cosmology_init: initializes cosmological time and sets lengths
+!!            and volumes from comoving to proper scaling.
+!! - time2zred: convert time to redshift
+!! - zred2time: convert redshift to time
+!! - cosmo_cool: cosmological adiabatic cooling rate
+!! - compton_cool: Compton cooling wrt the CMB.
+!!
+!! This module keeps track of the current redshift (zred) and the flag
+!! for cosmological calculations (cosmological).
 !!
 
 module cosmology
 
-  ! This module contains routines having to do with the cosmological 
-  ! evolution
-  
-  ! - cosmology_init: initializes cosmological time and sets lengths
-  !            and volumes from comoving to proper scaling.
-  ! - time2zred: convert time to redshift
-  ! - zred2time: convert redshift to time
-  ! - cosmo_cool: cosmological adiabatic cooling rate
-  ! - compton_cool: Compton cooling wrt the CMB.
 
   use precision, only: dp
   use my_mpi
@@ -51,7 +56,7 @@ contains
     
     use astroconstants, only: Mpc
 
-    logical, intent(in) :: cosmo_switch
+    logical, intent(in) :: cosmo_switch !< cosmological problem or not?
 
     real(kind=dp) :: zred0
 
@@ -83,7 +88,11 @@ contains
        
        ! Initialize redshift
        zred_t0=zred0 ! keep initial redshift
-       zred=0.0 ! needs to be zero, so comoving will be changed to proper
+       ! zred is the master redshift variable, but 
+       ! needs to be zero so that grid and material variables will be
+       ! initialized as comoving (z=0) and then changed to proper 
+       ! (z=zred_t0).
+       zred=0.0 
        
     endif
 

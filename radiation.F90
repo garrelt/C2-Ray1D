@@ -12,9 +12,22 @@
 !!
 !! \b Author: Garrelt Mellema
 !!
-!! \b Date:
+!! \b Date: 2010-Mar-08 (but older)
 !!
 !! \b Version: 1D version similar to the 3D version.
+!!
+!! <b>Programming note:</b> This version for the 1D code also sets and
+!! contains the source properties. In the 3Dm version there is a separate
+!! sourceprops module for that. It would be nice to be consistent and also
+!! have a source properties module for the 1D version. However, for the 1D
+!! version the effective temperature is a real input variable and the
+!! photo-ionization rates cannot be calculated before the this variable is
+!! set. This means that sourceprops would have to be called before rad_ini
+!! (unlike in the 3Dm version where it has to be called after). Also, both
+!! sourceprops and radiation would use the romberg integrator, so it should
+!! be clear who initializes it (unless the romberg module checks for this
+!! itself).
+!!
 
 module radiation
   

@@ -1,30 +1,59 @@
+!>
+!! \brief This module contains variables and routines for dealing with 
+!!   cpu and wall clocks
+!!
+!! This module uses calls to the Fortran 2003 internal routines cpu_time
+!! and system_clock. To get the time passed between two events, one has
+!! to call these twice, once at the start and once at the end. 
+!! To avoid overflowing the variable (which can happen for codes that run
+!! for many hours or days), this module provides "update" routines that
+!! update hour and minute counters. These should be called at regular
+!! intervals. The module also comes with its own reporting routines.
+!!
+!! General module
+!!
+!! Dependencies:
+!!   - file_admin module (for the unit of the log file where to write the report)
+!!   - my_mpi (for the value of rank, the MPI id of the current processor, reporting is only done for the rank 0 processor)
+!!
+!! Author: Garrelt Mellema
+!!
+!! Date: 2010-03-08
+!!
+!! Version: 1.0
+!!
+!<
+
 module clocks
 
-  use precision, only: dp
   use file_admin, only: logf
   use my_mpi, only: rank
 
   implicit none
 
   ! Start and end time for CPU report
-  real :: cputime1 !< Start time for CPU report
-  real :: cputime2 !< End time for CPU report
-  real(kind=dp) :: cpu_seconds=0.0
-  integer :: cpu_hours=0
-  integer :: cpu_minutes=0
+  real :: cputime1 !< Start time for call to CPU routine
+  real :: cputime2 !< End time for call to CPU routine
+
+  integer :: cpu_hours=0 !< accumulates the CPU hours
+  integer :: cpu_minutes=0 !< accumulates the CPU minutes
+  real :: cpu_seconds=0.0 !< accumulates the CPU seconds
   
   ! Wall clock time variables
-  integer :: cntr1 !< Start time wall clock
-  integer :: cntr2 !< End time wall clock
+  integer :: cntr1 !< Start time for call to wall clock routine
+  integer :: cntr2 !< End time for call to wall clock routine
+
   integer :: countspersec !< counts per second (for wall clock time)
-  real(kind=dp) :: clock_seconds=0.0
-  integer :: clock_hours=0
-  integer :: clock_minutes=0
+
+  integer :: clock_hours=0 !< accumulates the wall clock hours
+  integer :: clock_minutes=0 !< accumulates the wall clock minutes
+  real :: clock_seconds=0.0 !< accumulates the wall clock seconds
   
 contains
 
   !=======================================================================
 
+  !> Sets up all the clocks (initialization routine)
   subroutine setup_clocks
     
     call setup_cpuclock()
@@ -34,6 +63,7 @@ contains
   
   !=======================================================================
 
+  !> Sets up cpu clock (initialization routine)
   subroutine setup_cpuclock
     
     ! Initialize cpu timer
@@ -43,6 +73,7 @@ contains
   
   !=======================================================================
 
+  !> Sets up wall clock (initialization routine)
   subroutine setup_wallclock
     
     ! Initialize wall cock timer
@@ -52,6 +83,7 @@ contains
   
   !=======================================================================
 
+  !> Updates all the clocks
   subroutine update_clocks
     
     call update_cpuclock
@@ -61,6 +93,7 @@ contains
   
   !=======================================================================
 
+  !> Updates CPU clock
   subroutine update_cpuclock
     
     ! Find out intermediate CPU time (to avoid overflowing the counter)
@@ -76,6 +109,7 @@ contains
   
   !=======================================================================
 
+  !> Updates wall clock
   subroutine update_wallclock
     
     call system_clock(cntr2,countspersec)
@@ -90,6 +124,7 @@ contains
   
   !=======================================================================
 
+  !> Reports all the clocks
   subroutine report_clocks
     
     call report_cpuclock
@@ -99,6 +134,7 @@ contains
   
   !=======================================================================
 
+  !> Reports CPU clock to log file (unit logf)
   subroutine report_cpuclock
     
     call update_cpuclock ()
@@ -111,6 +147,7 @@ contains
   
   !=======================================================================
 
+  !> Reports wall clock to log file (unit logf)
   subroutine report_wallclock
     
     call update_wallclock ()

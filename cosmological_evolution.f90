@@ -8,8 +8,16 @@
 !! \b Date: 04-Mar-2006
 !!
 !! The density and lengths and volumes evolve due to the expansion
-!! of the Universe
+!! of the Universe. The cosmo_evol routines evolves the geometrical
+!! variables (r, dr, vol) and the material density variables (ndens)
+!! according to the current redshift (zfactor from the cosmology module).
 !!
+!! \b Programming \b note: this is probably a separate module from the cosmology
+!! module because of
+!! dependency problems. For the cosmo_evol routines, the grid and material
+!! variables have to be available, but for those the cosmology module has
+!! to be available. As cosmo_evol really belongs within the cosmology module
+!! a different solution would be desirable (GM, 20100308).
 
 module cosmological_evolution
 
@@ -19,7 +27,7 @@ module cosmological_evolution
   ! - cosmo_evol: cosmological evolution of space, density
 
   use precision, only: dp
-  use cosmology
+  use cosmology, only: zfactor
   use grid, only: r,dr,vol
   use material, only: ndens
     
