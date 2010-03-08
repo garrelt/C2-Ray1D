@@ -1,7 +1,17 @@
 !>
 !! \brief Main program for C2Ray-1D
 !!
+!! C2Ray-1D does a one-dimensional photo-ionization calculation 
+!! one of a series of test problems.\n
+!! The main programme calls a number of initialization routines
+!! and then enters the main integration loop, which ends when one
+!! of the stopping conditions is met. At specified times it calls
+!! the output module routines to produce output.
+!! After the integration loop ends, a number of closing down routines
+!! are called and the programme stops.
+!!
 !! \b Author: Garrelt Mellema \n
+!!
 !! \b Date: 23-Sep-2006
 !<
 Program C2Ray
@@ -17,19 +27,7 @@ Program C2Ray
   ! Does not include hydrodynamics
   ! Assumes constant time step
 
-  ! Needs following `modules'
-  ! c2ray_parameters : all the tunable parameters for the code
-  ! my_mpi : sets up the MPI parallel environment
-  ! output_module : output routines
-  ! grid : sets up the grid
-  ! radiation : radiation tools
-  ! pmfast : interface to PMFAST output
-  ! cosmology : cosmological utilities
-  ! material : material properties
-  ! times : time and time step utilities
-  ! sourceprops : source properties
-  ! evolve : evolve grid in time
-
+  ! Use statements
   use precision, only: dp
   use clocks, only: setup_clocks, update_clocks, report_clocks
   use file_admin, only: stdinput, logf, file_input, flag_for_file_input
@@ -46,14 +44,15 @@ Program C2Ray
   use evolve, only: evolve1D
 
 #ifdef XLF
+  ! Modules for the xlf (IBM) compiler
   USE XLFUTILITY, only: iargc, getarg, flush => flush_
 #endif
 
   implicit none
 
-  ! 
-  integer :: nstep
-  integer :: restart,nz,flag
+  ! Integer variables
+  integer :: nstep !< time step counter
+  integer :: restart !< restart if not zero (not used in 1D code)
 
   ! Time variables
   real(kind=dp) :: sim_time !< actual time (s)
