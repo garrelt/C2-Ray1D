@@ -7,13 +7,25 @@
 !!
 !! \b Date: 
 !!
+!! \b Version: H only
 !!
+!! History: the doric routine goes back to the early 1990-ies. It is an
+!! analytical solution to the problem of time dependent photo-ionization
+!! under the assumption of constant electron density. In this case the
+!! solution is an exponential which goes towards an equilibrium solution.
+!! This idea was taken from Schmidt-Voigt & Koeppen (1987). After the
+!! C2-Ray algorithm was conceived, the same time dependent solution is
+!! used to find the time-averaged ionization fraction needed by the
+!! algorithm.
+!! Note that the original version of doric also contained helium, following
+!! the algorithm from Schmidt-Voigt & Koeppen (1987). This algorithm is
+!! wrong, the proper one is given by Altay et al. (2008) and Friedrich
+!! et al. (2010).
 
 module doric_module
   
   ! This module contains routines having to do with the calculation of
   ! the ionization evolution of a single grid point.
-  ! It can used for Yguazu-a or non-hydro photo-ionization calculations.
 
   ! - doric : time dependent solution of the ionization equation
   ! - coldens : column density of a single cell.
@@ -46,7 +58,6 @@ contains
     ! 11-May-2005 (GM): f90
     
     use cgsconstants, only: bh00,albpow,colh0,temph0
-    !use subgrid_clumping, only: clumping
     use material, only: clumping
     use radiation, only: photrates
     use tped, only: electrondens ! should this really be used inside doric?
@@ -67,6 +78,8 @@ contains
     real(kind=dp) :: avg_factor
     
     ! find the hydrogen recombination rate at the local temperature
+    ! We assume that the recombination rate can be approximated as
+    ! a single powerlaw.
     brech0=clumping*bh00*(temp0/1e4)**albpow
     
     ! find the hydrogen collisional ionization rate at the local 
@@ -77,15 +90,16 @@ contains
     ! Find the true photo-ionization rate
     aphoth0=phi%h
     
-    ! determine the hydrogen and helium ionization states and 
+    ! determine the hydrogen ionization state and 
     ! electron density
     ! (schmidt-voigt & koeppen 1987)
     ! The electron density is the time-averaged value.
-    ! This needs to be iterated, in this version the iteration
+    ! This needs to be iterated, as the electron density
+    ! depends on the hydrogen ionization state. 
+    ! In this version the iteration
     ! is assumed to take place outside the doric routine.
     
     ! Save old values
-    !rhe0=rhe
     xfh1old=xfh(1)
     xfh0old=xfh(0)
     
@@ -123,7 +137,6 @@ contains
     !if (xfh_av(0).lt.epsilon.and.abs(xfh_av(0)).lt.1.0e-10) xfh_av(0)=epsilon
     if (xfh_av(0) < epsilon) xfh_av(0)=epsilon
     
-    return
   end subroutine doric
   
   ! =======================================================================
