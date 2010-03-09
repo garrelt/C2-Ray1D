@@ -161,8 +161,8 @@ contains
                   real(time)/end_time, &
                   (total_ion-totcollisions)/(s_star*dt), &
                   dh0/total_ion, &
-                  photon_loss*dt/total_ion, &
                   totrec/total_ion, &
+                  photon_loss*dt/total_ion, &
                   totcollisions/total_ion, &
                   grtotal_ion/(s_star*time)
           endif
