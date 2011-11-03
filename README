@@ -1,0 +1,4 @@
+This is the C2-Ray code for time-dependent photo-ionization calculations.
+This version is for 1D, spherical symmetric calculations with the source
+at the origin, and for hydrogen only.
+
