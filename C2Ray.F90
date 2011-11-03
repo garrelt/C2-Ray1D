@@ -65,13 +65,13 @@ Program C2Ray
   ! Initialize clocks (cpu and wall)
   call setup_clocks
 
-  ! Set up MPI structure
+  ! Set up MPI structure (compatibility mode) & open log file
   call mpi_setup()
 
   ! Set up input stream (either standard input or from file given
   ! by first argument)
   if (rank == 0) then
-     write(logf,*) "input or input?"
+     write(logf,*) "screen input or file input?"
      flush(logf)
      if (COMMAND_ARGUMENT_COUNT () > 0) then
         call GET_COMMAND_ARGUMENT(1,inputfile)
@@ -103,20 +103,19 @@ Program C2Ray
   sim_time=0.0
   next_output_time=0.0
 
-  ! Initialize cosmology
+  ! Update cosmology (transform from comoving to proper values)
   if (cosmological) then
      call redshift_evol(sim_time)
      call cosmo_evol( )
-     write(*,*) zred
+     !write(*,*) zred
   endif
-  !call cosmology_init(zred_array(1),sim_time)
 
   ! Loop until end time is reached
   nstep=0
   do
   
      ! Write output
-     if (abs(sim_time-next_output_time).le.1e-6*sim_time) then
+     if (abs(sim_time-next_output_time) <= 1e-6*sim_time) then
         call output(sim_time,dt,end_time)
         next_output_time=next_output_time+output_time
      endif
@@ -142,7 +141,7 @@ Program C2Ray
      ! Update time
      sim_time=sim_time+actual_dt
             
-     if (abs(sim_time-end_time).lt.1e-6*end_time) exit
+     if (abs(sim_time-end_time) < 1e-6*end_time) exit
 
      ! Update clock counters (cpu + wall, to avoid overflowing the counter)
      call update_clocks ()

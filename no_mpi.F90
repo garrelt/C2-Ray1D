@@ -28,7 +28,7 @@ module my_mpi
   
   implicit none
 
-  integer,parameter,public :: NPDIM=3 !< dimension of problem
+  integer,parameter,public :: NPDIM=1 !< dimension of problem
 
   ! All of these are set to be consistent with the MPI version
   integer,public :: rank              !< rank of the processor
