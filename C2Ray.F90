@@ -76,7 +76,7 @@ Program C2Ray
      if (COMMAND_ARGUMENT_COUNT () > 0) then
         call GET_COMMAND_ARGUMENT(1,inputfile)
         write(logf,*) "reading input from ",trim(adjustl(inputfile))
-        open(unit=stdinput,file=inputfile)
+        open(unit=stdinput,file=inputfile,status="old")
         call flag_for_file_input(.true.)
      else
         write(logf,*) "reading input from command line"
