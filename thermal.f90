@@ -29,6 +29,8 @@ module thermalevolution
 
   implicit none
 
+  real(kind=dp),parameter :: thermal_convergence = 0.01
+
 contains
 
   !=======================================================================
@@ -61,7 +63,7 @@ contains
     !real(kind=dp),parameter :: relative_denergy=0.1_dp    
     
     real(kind=dp),intent(in) :: dt !< time step
-    real(kind=dp),intent(out) :: temper !< temperature
+    real(kind=dp),intent(inout) :: temper !< temperature
     real(kind=dp),intent(out) :: avg_temper !< time-averaged temperature
     real(kind=dp),intent(in) :: rhe !< electron density
     real(kind=dp),intent(in) :: rhh !< number density
@@ -70,10 +72,12 @@ contains
     real(kind=dp),intent(in) :: xh0(0:1) !< initial H ionization fractions
     type(photrates),intent(in) :: phi
 
-    real(kind=dp) :: temper0
+    real(kind=dp) :: temper0,temper1,temper2
     real(kind=dp) :: dt0,dt1,timestep,e_int,dt_thermal
+    real(kind=dp) :: e_int0,e_int1
     real(kind=dp) :: emin,eplus,thermalrt,cosmo_cool_rate
     integer :: nstep,nstepmax
+    integer :: niter
 
     ! Photo-ionization heating
     eplus=phi%hv_h
@@ -90,7 +94,7 @@ contains
     !endif
 
     ! Do nothing if temperature is below minitemp
-    if (temper.gt.minitemp) then
+    if (temper > minitemp) then
        !
        ! Do the cooling/heating.
        ! First figure out the cooling/heating rate (thermalrt) 
@@ -111,33 +115,55 @@ contains
        do
           ! update counter              
           nstep=nstep+1 
+          niter=0
+          ! Initialize temper1 and e_int0
+          temper1=temper
+          e_int0=e_int
+          do
+             ! save previous value of temperature
+             temper2=temper1
+             ! Find cooling rate (using average ionization fraction)
+             !emin=min(1d-50,1e-8*eplus)!
+             emin=coolin(rhh,rhe,xh_av,0.5*(temper + temper1) )
+             emin=emin+cosmo_cool_rate
+             ! Find total energy change rate
+             thermalrt=max(1d-50,abs(emin-eplus))
+             ! Calculate thermal time
+             dt_thermal=e_int0/abs(thermalrt)
+             ! Calculate time step needed to limit energy change
+             ! to a fraction relative_denergy
+             dt1=relative_denergy*dt_thermal
+             ! Time step to large, change it to dt1
+             ! Make sure we do not integrate for longer than the
+             ! total time step dtcgs
+             dt0=min(dt1,dt-timestep)
+             ! Find new internal energy density
+             e_int1=e_int0+dt0*(eplus-emin)
+             ! Find new temperature from the internal energy density
+             !temper1=pressr2temper(e_int1*gamma1,rhh,electrondens(rhh,xh_av))
+             temper1=0.5*(temper2 + &
+                  pressr2temper(e_int1*gamma1,rhh,electrondens(rhh,xh_av)))
+
+             if (abs(temper2-temper1)/temper1 < thermal_convergence) exit
+             niter=niter+1
+             if (niter > 1000) then
+                write(logf,*) "Backward Euler in thermal not converging..."
+                write(logf,*) "Last two temperature values: ",temper1, temper2
+                exit
+             endif
+          enddo
           
-          ! Find cooling rate (using average ionization fraction)
-          !emin=min(1d-50,1e-8*eplus)!
-          emin=coolin(rhh,rhe,xh_av,temper)
-          emin=emin+cosmo_cool_rate
-          ! Find total energy change rate
-          thermalrt=max(1d-50,abs(emin-eplus))
-          ! Calculate thermal time
-          dt_thermal=e_int/abs(thermalrt)
-          ! Calculate time step needed to limit energy change
-          ! to a fraction relative_denergy
-          dt1=relative_denergy*dt_thermal
-          ! Time step to large, change it to dt1
-          ! Make sure we do not integrate for longer than the
-          ! total time step dtcgs
-          dt0=min(dt1,dt-timestep)
-          ! Find new internal energy density
-          e_int=e_int+dt0*(eplus-emin)
+          ! Save the values obtained
+          temper=temper1
+          e_int=e_int1
+
           ! Update avg_temper sum (first part of dt1 sub time step)
-          avg_temper=avg_temper+0.5*temper*dt0
-          ! Find new temperature from the internal energy density
-          temper=pressr2temper(e_int*gamma1,rhh,electrondens(rhh,xh_av))
+          avg_temper=avg_temper+0.5*temper0*dt0
           ! Update avg_temper sum (second part of dt1 sub time step)
           avg_temper=avg_temper+0.5*temper*dt0
-          
+
           ! Take measures if temperature drops below minitemp
-          if (temper.lt.minitemp) then
+          if (temper < minitemp) then
              e_int=temper2pressr(minitemp,rhh,electrondens(rhh,xh_av))
              temper=minitemp
           endif
@@ -147,12 +173,12 @@ contains
           
           ! Exit if we reach dt
           ! Mind fp precision here, so check for nearness
-          if (timestep.ge.dt.or.abs(timestep-dt).lt.1e-6*dt) exit
+          if (timestep >= dt .or. abs(timestep-dt) < 1e-6*dt) exit
           
        enddo
        
        ! Calculate time averaged temperature
-       if (dt.gt.0.0) then
+       if (dt > 0.0) then
           avg_temper=avg_temper/dt
        else
           avg_temper=temper0

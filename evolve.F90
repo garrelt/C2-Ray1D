@@ -130,7 +130,7 @@ contains
     use doric_module, only: doric, coldens, coldensh_bndry
     use radiation, only: photoion, photrates
     use c2ray_parameters, only: epsilon,convergence1,convergence2
-    use material, only: isothermal
+    use material, only: isothermal, gamma_uvb_h
     use thermalevolution, only: thermal
 
     implicit none
@@ -213,6 +213,9 @@ contains
        call photoion(phi,coldensh_in,coldensh_in+coldensh_cell, &
             vol_ph)
        phi%h=phi%h/(yh_av(0)*ndens_p)
+
+       ! Add ionizing background to photo-ionization rate(s)
+       phi%h=phi%h + gamma_uvb_h
 
        ! Restore yh to initial values (for doric)
        yh(:)=yh0(:)

@@ -24,8 +24,8 @@ module radiative_cooling
   integer,parameter,private :: temppoints=81 !< number of points in cooling tables
   real(kind=dp),dimension(temppoints),private :: h0_cool !< H0 cooling table
   real(kind=dp),dimension(temppoints),private :: h1_cool !< H+ cooling table
-  real(kind=dp) :: mintemp !< lowest log10(temperature) in table
-  real(kind=dp) :: dtemp !< steps in log10(temperature) in table
+  real(kind=dp),private :: mintemp !< lowest log10(temperature) in table
+  real(kind=dp),private :: dtemp !< steps in log10(temperature) in table
 
 contains
   
