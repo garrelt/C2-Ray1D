@@ -28,7 +28,7 @@ module material
   ! Problem 4: cosmological constant density (Shapiro & Giroux problem)
 
   use precision, only: dp,si
-  use cgsconstants, only: bh00
+  use cgsconstants, only: bh00, albpow
   use astroconstants, only: YEAR
   use sizes, only: mesh
   use file_admin, only: stdinput, file_input
@@ -51,9 +51,10 @@ module material
   real(kind=dp) :: dens_core !< core density (for problems 2 and 3)
   integer :: testnum !< number of test problem (1 to 4)
   logical :: isothermal !< is the run isothermal?
+  real(kind=dp) :: gamma_uvb_h
   ! needed for analytical solution of cosmological Ifront
   real(kind=dp) :: t1 !< parameter for analytical solution of test 4 
-  real(kind=dp) :: eta !< parameter for analytical solution of test 4  
+  real(kind=dp) :: eta !< parameter for analytical solution of test 4 
 
 #ifdef MPI
   integer,private :: ierror !< MPI error flag
@@ -90,6 +91,8 @@ contains
     real(kind=dp) :: dens_val
     real(kind=dp) :: temper_val
     real(kind=dp) :: alpha
+    real(kind=dp) :: zfactor
+    real(kind=dp) :: two_na
     character(len=1) :: answer
 
     ! restart
@@ -142,6 +145,8 @@ contains
        else
           isothermal=.false.
        endif
+       if (.not.file_input) write(*,'(A,$)') 'Ionizing background (s^-1): '
+       read(stdinput,*) gamma_uvb_h
     endif
 #ifdef MPI
     ! Distribute the input parameters to the other nodes
@@ -151,6 +156,7 @@ contains
     call MPI_BCAST(clumping,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_NEW,ierror)
     call MPI_BCAST(temper_val,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_NEW,ierror)
     call MPI_BCAST(isothermal,1,MPI_LOGICAL,0,MPI_COMM_NEW,ierror)
+    call MPI_BCAST(gamma_uvb_h,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_NEW,ierror)
 #endif
 
        
@@ -214,11 +220,26 @@ contains
     
     
     ! Assign ionization fractions
-    do i=1,mesh
-       xh(i,0)=1.0-1.2e-3
-       xh(i,1)=1.2e-3
-    enddo
-    
+    ! Use Gamma_UVB_H for this if it is not zero
+    if (testnum == 4) then
+       zfactor=(1.+zred_t0)**3
+    else
+       zfactor=1.0
+    endif
+    if (gamma_uvb_h > 0.0) then
+       do i=1,mesh
+          two_na=2.0 * ndens(i) * clumping * bh00 * (temper(i)/1e4)**albpow
+          xh(i,1)=(sqrt(gamma_uvb_h*(gamma_uvb_h + 2 * two_na))-gamma_uvb_h)/ &
+               two_na
+          xh(i,0)=1.0-xh(i,1)
+       enddo
+    else
+       do i=1,mesh
+          xh(i,0)=1.0-1e-8
+          xh(i,1)=1e-8
+       enddo
+    endif
+
     ! Report recombination time scale (in case of screen input)
     if (.not.file_input) write(*,'(A,1pe10.3,A)') 'Recombination time scale: ', &
          1.0/(dens_val*clumping*bh00*YEAR),' years'
