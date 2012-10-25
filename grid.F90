@@ -1,15 +1,17 @@
 !>
-!! \brief This module contains data and routines for handling the physical grid (1D)
+!! \brief This module contains data and routines for handling the physical grid
 !!
 !! \b Author: Garrelt Mellema
 !!
-!! \b Date: 
+!! \b Date: 2012-10-13 (but older)
 !!
-!!
+!! \b Version: 1D, radial (spherically symmetric) grid.
 
 module grid
 
   ! Handles grid properties
+  ! Data: grid quantities: cell size, spatial coordinates, cell volume
+  ! Routines: grid initialization: grid_ini
 
   use precision, only: dp
   use sizes, only: Ndim, mesh
@@ -20,8 +22,8 @@ module grid
   implicit none
 
   ! Contains grid data
-  ! dr - cell size
-  ! x,y,z - x,y,z coordinates
+  ! dr - (radial) cell size
+  ! x - spatial coordinates (radial)
   ! vol - volume of one cell
   real(kind=dp) :: dr !< cell size
   real(kind=dp),dimension(mesh) :: r !< spatial cooridnate

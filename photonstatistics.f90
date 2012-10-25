@@ -148,7 +148,7 @@ contains
 
   !> Calculate the total number of ionizing photons used
   subroutine total_ionizations ()
-    
+
     ! Photon statistics: Total number of new ionizations
     dh0=(h0_before-h0_after)
     total_ion=totrec+dh0
