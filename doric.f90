@@ -69,7 +69,7 @@ contains
     real(kind=dp),intent(in) :: rhh !< H density (or total density?)
     real(kind=dp),dimension(0:1),intent(out) :: xfh !< H ionization fractions
     real(kind=dp),dimension(0:1),intent(inout) :: xfh_av !< H ionization fractions (time-averaged)
-    type(photrates) :: phi !< photo-ionization rates
+    type(photrates),intent(in) :: phi !< photo-ionization rates
     
     real(kind=dp) :: brech0,sqrtt0,acolh0
     real(kind=dp) :: rhe0,xfh1old,xfh0old,aih0,delth,eqxfh0,eqxfh1
