@@ -24,10 +24,11 @@ Program C2Ray
   ! One dimensional photo-ionization calculation for a series of
   ! test problems.
   
-  ! Does not include hydrodynamics
-  ! Assumes constant time step
+  ! Version notes:
+  ! - Does not include hydrodynamics
+  ! - Assumes time step
 
-  ! Use statements
+  ! Needs following modules
   use precision, only: dp
   use clocks, only: setup_clocks, update_clocks, report_clocks
   use file_admin, only: stdinput, logf, file_input, flag_for_file_input
@@ -76,7 +77,7 @@ Program C2Ray
      if (COMMAND_ARGUMENT_COUNT () > 0) then
         call GET_COMMAND_ARGUMENT(1,inputfile)
         write(logf,*) "reading input from ",trim(adjustl(inputfile))
-        open(unit=stdinput,file=inputfile)
+        open(unit=stdinput,file=inputfile,status="old")
         call flag_for_file_input(.true.)
      else
         write(logf,*) "reading input from command line"
@@ -148,7 +149,6 @@ Program C2Ray
 
   enddo
 
-  ! stop
   ! Scale to the current redshift
   if (cosmological) then
      call redshift_evol(sim_time)
@@ -160,7 +160,7 @@ Program C2Ray
 
   ! Clean up some stuff
   call close_down ()
-  
+
   ! Report clocks (cpu and wall)
   call report_clocks ()
 
