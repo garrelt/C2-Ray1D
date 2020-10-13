@@ -5,6 +5,7 @@
 1.0       ! clumping factor
 1.0e4     ! initial temperature (K)
 y         ! isothermal (y/n)
+0.0	  ! UV Background (s^-1)
 30000.    ! Teff (K)
 3         ! 3: input is S_star
 1e51      ! S_star

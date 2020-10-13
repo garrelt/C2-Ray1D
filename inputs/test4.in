@@ -4,6 +4,7 @@
 5.0           ! clumping factor
 1.0e4         ! initial temperature (K)
 y             ! isothermal (y/n)
+0.0	      ! UV Background (s^-1)
 9.	      ! initial redshift
 0.7           ! h
 0.27          ! Omega0	
