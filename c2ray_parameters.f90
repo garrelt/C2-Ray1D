@@ -17,6 +17,7 @@ module c2ray_parameters
   use astroconstants
 
   implicit none
+  save
 
   !> Which fraction of the cells can be left unconverged in order
   !! to improve performance (used in rad_evolve3d)

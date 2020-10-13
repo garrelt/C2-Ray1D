@@ -139,7 +139,7 @@ contains
     !      the output.
     
     use sizes, only: mesh
-    use grid, only: x,dr
+    use grid, only: r,dr
     use material
     use photonstatistics
     use radiation, only: teff,rstar,lstar,S_star
@@ -180,7 +180,7 @@ contains
     !                     since t=0
 
     use sizes, only: mesh
-    use grid, only: x,dr
+    use grid, only: r,dr
     use material
     use photonstatistics
     use radiation, only: teff,rstar,lstar,S_star
@@ -228,7 +228,7 @@ contains
     !                  Error due to finite cell size.
     
     use sizes, only: mesh
-    use grid, only: x,dr
+    use grid, only: r,dr
     use material
     use photonstatistics
     use radiation, only: teff,rstar,lstar,S_star
@@ -517,7 +517,7 @@ contains
     ! print*,'expint called',n,x,etatratio
     ! print*,'args',n,x
     if(n<0 .or. x<0. .or. (x == 0. .and. (n==0 .or. n==1)))then
-       pause 'bad arguments in expint'
+       write(*,*) 'bad arguments in expint'
     else if(n == 0)then
        expint=exp(-x)/x
     else if(x == 0.)then
@@ -540,7 +540,7 @@ contains
              return
           endif
        enddo
-       pause 'continued fraction failed in expint'
+       write(*,*) 'continued fraction failed in expint'
     else
        if(nm1 /= 0)then
           expint=1./nm1
@@ -566,7 +566,7 @@ contains
              return
           end if
        enddo
-       pause 'series failed in expint'
+       write(*,*) 'series failed in expint'
     endif
     return
   END FUNCTION expint

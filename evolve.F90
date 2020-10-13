@@ -28,6 +28,8 @@ module evolve
 
   implicit none
 
+  save
+
   private
 
   public :: evolve1D !> evolve 1D grid

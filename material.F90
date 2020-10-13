@@ -39,6 +39,7 @@ module material
   use cosmology, only: cosmology_init,H0,t0,zred_t0
 
   implicit none
+  save
 
   ! ndens - number density (cm^-3) of a cell
   ! temper - temperature (K) of a cell
@@ -92,7 +93,7 @@ contains
     real(kind=dp) :: temper_val
     real(kind=dp) :: alpha
     real(kind=dp) :: zfactor
-    real(kind=dp) :: two_na
+    real(kind=dp) :: xions
     character(len=1) :: answer
 
     ! restart
@@ -251,9 +252,10 @@ contains
     integer,intent(in) :: ii
     real(kind=dp),intent(in) :: nnd
     real(kind=dp),intent(in) :: ttemp
+    real(kind=dp) :: two_na
     real(kind=dp),intent(out) :: xions
     
-    two_na=2.0 * nnd * clumping * bh00 * (temper(i)/1e4)**albpow
+    two_na=2.0 * nnd * clumping * bh00 * (temper(ii)/1e4)**albpow
     xions=1.0-(sqrt(gamma_uvb_h*(gamma_uvb_h + 2 * two_na))-gamma_uvb_h)/ &
          two_na
     

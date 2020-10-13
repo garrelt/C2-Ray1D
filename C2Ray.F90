@@ -117,7 +117,7 @@ Program C2Ray
   
      ! Write output
      if (abs(sim_time-next_output_time) <= 1e-6*sim_time) then
-        call output(sim_time,dt,end_time)
+        call output(nstep,sim_time,dt,end_time)
         next_output_time=next_output_time+output_time
      endif
      
@@ -156,7 +156,7 @@ Program C2Ray
   endif
 
   ! Write final output
-  call output(sim_time,dt,end_time)
+  call output(nstep,sim_time,dt,end_time)
 
   ! Clean up some stuff
   call close_down ()

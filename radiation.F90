@@ -21,7 +21,7 @@
 !! sourceprops module for that. It would be nice to be consistent and also
 !! have a source properties module for the 1D version. However, for the 1D
 !! version the effective temperature is a real input variable and the
-!! photo-ionization rates cannot be calculated before the this variable is
+!! photo-ionization rates cannot be calculated before this variable is
 !! set. This means that sourceprops would have to be called before rad_ini
 !! (unlike in the 3Dm version where it has to be called after). Also, both
 !! sourceprops and radiation would use the romberg integrator, so it should
@@ -40,12 +40,12 @@ module radiation
   !
   !     Author: Garrelt Mellema
   ! 
-  !     Date: 31-Jan-2008 (02-Jun-2004 (04-Mar-2004)
+  !     Date: 02-Nov-2012 (31-Jan-2008 (02-Jun-2004 (04-Mar-2004)
   
   ! Version
   ! Simplified version
   ! - Only hydrogen
-  ! - Option for Grey photo-ionization cross section
+  ! - Option for grey photo-ionization cross section
   ! - MPI enabled (broadcasts of radiative parameters to all nodes).
 
   ! Notes:
@@ -95,6 +95,8 @@ module radiation
   real(kind=dp),parameter :: maxlogtau=4.0 !< log10(highest optical depth)
   !> step size in log10(tau) between table entries
   real(kind=dp),parameter :: dlogtau=(maxlogtau-minlogtau)/real(NumTau)
+  !> Optical depth array
+  real(kind=dp) :: tau(0:NumTau)
 
   !> Logical that determines the use of grey opacities
   logical,parameter :: grey=.false. ! use grey opacities?
@@ -104,17 +106,9 @@ module radiation
   real(kind=dp) :: rstar !< Black body radius
   real(kind=dp) :: lstar !< Black body luminosity
   real(kind=dp) :: S_star !< Black body ionizing photons rate
-  
-  ! Photo-ionization integral cores
-  real(kind=dp),dimension(NumFreqBnd) :: steph0 !< frequency steps in table 
-  !> photo-ionization integral core for H0 (optically thick case)
-  real(kind=dp),dimension(:,:,:),allocatable  :: h0int 
-  !> photo-ionization heating integral core for H0 (optically thick case)
-  real(kind=dp),dimension(:,:,:),allocatable  :: hh0int
-  !> photo-ionization integral core for H0 (optically thin case)
-  real(kind=dp),dimension(:,:,:),allocatable  :: h0int1
-  !> photo-ionization heating integral core for H0 (optically thin case)
-  real(kind=dp),dimension(:,:,:),allocatable  :: hh0int1
+
+  !> Frequency steps for integration
+  real(kind=dp),dimension(NumFreqBnd) :: steph0 
 
   ! Photo-ionization integrals (rates)
   !> photo-ionization integral for H0 (optically thick case)
@@ -163,16 +157,13 @@ contains
     call romberg_initialisation(NumFreq)
 
     ! Ask for the parameters of the spectrum
-    call spectrum_parms ()
+    call spectrum_parameters ()
 
     ! Determine spectrum diagnostics
-    call spec_diag ()
-
-    ! Calculate spectral integral cores
-    call spec_integr_cores ()
+    call spectrum_diagnostics ()
 
     ! Find the photo-ionization integrals for this spectrum
-    call spec_integr ()
+    call integrate_spectrum ()
 
     ! Set the radiative boundary conditions
     !call rad_boundary() ! NO LONGER NEEDED
@@ -188,7 +179,7 @@ contains
   !=======================================================================
 
   !> Input routine: establish the ionizing spectrum
-  subroutine spectrum_parms
+  subroutine spectrum_parameters
 
     ! Input routine: establish the ionizing spectrum
      
@@ -288,12 +279,12 @@ contains
          ierror)
 #endif
     
-  end subroutine spectrum_parms
+  end subroutine spectrum_parameters
 
   !=======================================================================
   
   !> Calculates properties of the black body spectrum
-  subroutine spec_diag ()
+  subroutine spectrum_diagnostics ()
 
     ! Calculates properties of spectrum
     ! This version: number of ionizing photons, S*, which can be
@@ -327,14 +318,14 @@ contains
        bb(i)=tpic2*fr(i)*fr(i)/(exp(fr(i)*rfr)-1.0)
     enddo
 
-    ! Find flux by integrating
+    ! Find ionizing flux by integrating over spectrum
     flux=scalar_romberg(bb,weight,NumFreq,NumFreq,0)
 
     ! Find out what is the S_star for the radius supplied.
     S_star_unscaled=4.0*pi*rstar*rstar*flux
 
     ! If S_star is zero, it is set here.
-    if (S_star .eq. 0.0) then
+    if (S_star == 0.0) then
        S_star=S_star_unscaled
     else
        ! Find out the factor by which to change the radius
@@ -356,46 +347,32 @@ contains
             S_star,' s^-1'
     endif
 
-  end subroutine spec_diag
+  end subroutine spectrum_diagnostics
   
   !=======================================================================
 
-  !> Calculates spectral integration cores
-  subroutine spec_integr_cores ()
+  !> Calculates photo-ionization tables by integrating over frequency
+  subroutine integrate_spectrum ()
 
-    ! Calculates spectral integration cores
+    ! Calculates photo-ionization tables by integrating over frequency
 
     ! Author: Garrelt Mellema
-    ! Date: 19-Feb-2004
-    ! Version: Simplified version from Coral.
+    ! Date: 01-Nov-2012 (19-Feb-2004)
+    ! Version: Single integration step
 
-    ! Note: the calculation of the photo-ionization integrals is split
-    ! into two parts. The cores (calculated in this routine) are the parts 
-    ! that do not change if the effective temperature and luminosity evolve.
-    ! For evolving sources, these parts do not need to be recalculated.
-    ! In spec_integr the effective temperature part is added, and the
-    ! integration over frequency is performed.
-
-    ! Note 2: the cpu time gain of not recalculating these cores should
-    !  really be tested.
-
-    ! Note 3: we calculate two integrals over each rate: one for optically
+    ! Note 1: we calculate two integrals over each rate: one for optically
     ! thick cells (ensuring photon-conservation for those cells), and one 
     ! for optically thin cells. The latter are marked with 1.
 
     integer :: i,n
     real(kind=dp) :: frmax
-    real(kind=dp) :: tau(0:NumTau)
+    real(kind=dp) :: rfr
     real(kind=dp) :: fr(0:NumFreq)
-    real(kind=dp) :: h0ffr(0:NumFreq)
+    real(kind=dp) :: h0cross_freqdep(0:NumFreq)
+    real(kind=dp),dimension(:),allocatable :: integrand
     
-    ! Allocate the spectral integral cores
-    allocate(h0int(0:NumFreq,0:NumTau,NumFreqBnd))
-    allocate(h0int1(0:NumFreq,0:NumTau,NumFreqBnd))
-    if (.not.isothermal) then
-       allocate(hh0int(0:NumFreq,0:NumTau,NumFreqBnd))
-       allocate(hh0int1(0:NumFreq,0:NumTau,NumFreqBnd))
-    endif
+    ! Allocate the integrand needed for making the tables
+    allocate(integrand(0:NumFreq))
 
     ! fill the optical depth array used to fill the tables 
     ! it is filled in NumTau logarithmic steps 
@@ -409,10 +386,21 @@ contains
     ! Warn about grey opacities:
     if (grey .and. rank == 0) write(logf,*) 'WARNING: Using grey opacities'
 
+    ! Allocate photo-ionization tables
+    allocate(hphot(0:NumTau,NumFreqBnd))
+    allocate(hphot1(0:NumTau,NumFreqBnd))
+    if (.not.isothermal) then
+       allocate(hheat(0:NumTau,NumFreqBnd))
+       allocate(hheat1(0:NumTau,NumFreqBnd))
+    endif
+
+    ! This is h/kT
+    rfr=hplanck/(kb*teff)
+
     ! frequency band 1
     ! (there is space for NumFreqBnd frequency bands, only
     ! one is used here).
-    if (frth0.lt.frtop1) then
+    if (frth0 < frtop1) then
        
        ! Upper limit of frequency integration
        frmax=min(frtop1,10.0*frtop2)
@@ -426,141 +414,91 @@ contains
           ! Frequency dependence of the absorption
           ! cross section:
           if (grey) then
-             h0ffr(i)=1.0
+             h0cross_freqdep(i)=1.0
           else
-             h0ffr(i)=(betah0*(fr(i)/frth0)**(-sh0)+ &
+             h0cross_freqdep(i)=(betah0*(fr(i)/frth0)**(-sh0)+ &
                   (1.0-betah0)*(fr(i)/frth0)**(-sh0-1.0))
           endif
-
-          do n=0,NumTau
-             ! Protect against floating point errors
-             ! This needs to be checked. I remember that
-             ! -700 is the minimum exponent allowed for
-             ! doubleprecision...
-             if (tau(n)*h0ffr(i) < 700.0) then
-                h0int(i,n,1)=tpic2*fr(i)*fr(i)* &
-                     exp(-tau(n)*h0ffr(i))
-                h0int1(i,n,1)=tpic2*fr(i)*fr(i)*h0ffr(i)* &
-                     exp(-tau(n)*h0ffr(i))
-             else
-                h0int(i,n,1)=0.0
-             endif
-             if (.not.isothermal) then
-                hh0int(i,n,1)=hplanck*(fr(i)-frth0)*h0int(i,n,1)
-                hh0int1(i,n,1)=hplanck*(fr(i)-frth0)*h0int1(i,n,1)
-             endif
-          enddo
        enddo
+
+       ! Photo-ionization rate table (optically thick)
+       do i=0,NumFreq
+          integrand(i)=tpic2*fr(i)*fr(i)/(exp(fr(i)*rfr)-1.0)
+       enddo
+       hphot=make_table(fr,steph0(1),integrand,h0cross_freqdep,1)
+
+       ! Photo-ionization rate table (optically thin)
+       do i=0,NumFreq
+          integrand(i)=tpic2*fr(i)*fr(i)*h0cross_freqdep(i)/(exp(fr(i)*rfr)-1.0)
+       enddo
+       hphot1=make_table(fr,steph0(1),integrand,h0cross_freqdep,1)
+
+       ! Photo-ionization heating table (optically thick)
+       if (.not.isothermal) then
+          do i=0,NumFreq
+             integrand(i)=hplanck*(fr(i)-frth0)*tpic2*fr(i)*fr(i)/ &
+                  (exp(fr(i)*rfr)-1.0)
+          enddo
+          hheat=make_table(fr,steph0(1),integrand,h0cross_freqdep,1)
+
+          ! Photo-ionization heating table (optically thin)
+          do i=0,NumFreq
+             integrand(i)=hplanck*(fr(i)-frth0)*tpic2*fr(i)*fr(i)*h0cross_freqdep(i)/ &
+                  (exp(fr(i)*rfr)-1.0)
+          enddo
+          hheat1=make_table(fr,steph0(1),integrand,h0cross_freqdep,1)
+       endif
     endif
-    
-  end subroutine spec_integr_cores
+
+  end subroutine integrate_spectrum
   
   ! =======================================================================
-  
-  !> Calculates photo ionization integrals
-  subroutine spec_integr ()
 
-    ! Calculates photo ionization integrals
+  !> Function to integrate the different rates.
+  function make_table(fr,deltafr,integrand,absfr,IFreqBand)
 
-    ! Author: Garrelt Mellema
-    ! Date: 19-Feb-2004
+    ! Version: Black body spectrum
 
-    ! Version: Simplified from Coral
+    real(kind=dp),dimension(0:NumFreq),intent(in) :: fr !< frequency array
+    real(kind=dp),intent(in) :: deltafr !< step size of frequency array
+    !> core function to be integrated
+    real(kind=dp),dimension(0:NumFreq),intent(in) :: integrand 
+    !> frequency dependence of absorption coefficient
+    real(kind=dp),dimension(0:NumFreq),intent(in) :: absfr 
+    integer,intent(in) :: IFreqBand !< which frequency band
+    !> result: photoionization table for different optical depths
+    real(kind=dp),dimension(0:NumTau,NumFreqBnd) :: make_table
+    
+    real(kind=dp),dimension(0:NumFreq,0:NumTau) :: weight(0:NumFreq,0:NumTau)
+    real(kind=dp),dimension(0:NumFreq,0:NumTau) :: func
+    real(kind=dp),dimension(0:NumTau) :: integral_result
+    integer :: i, n
 
-    ! Two types of integrals are evaluated: one for optically thick cells
-    ! (hphot, hheat) and one for optically thin cells (hphot1, hheat1).
-
-    integer :: i,n,nfrq
-    real(kind=dp) :: rstar2,rfr
-    real(kind=dp) :: fr(0:NumFreq),func1(0:NumFreq,0:NumTau)
-    real(kind=dp) :: func2(0:NumFreq,0:NumTau)
-    real(kind=dp) :: weight(0:NumFreq,0:NumTau),phot(0:NumTau)
-
-    ! Allocate photo-ionization tables
-    allocate(hphot(0:NumTau,NumFreqBnd))
-    allocate(hphot1(0:NumTau,NumFreqBnd))
-    if (.not.isothermal) then
-       allocate(hheat(0:NumTau,NumFreqBnd))
-       allocate(hheat1(0:NumTau,NumFreqBnd))
-    endif
-
-    ! This is h/kT
-    rfr=hplanck/(kb*teff)
-
-    ! frequency interval 1
     do i=0,NumFreq
-       fr(i)=frth0+steph0(1)*real(i)
        do n=0,NumTau
-          weight(i,n)=steph0(1)
-          func1(i,n)=h0int(i,n,1)/(exp(fr(i)*rfr)-1.0)
-          if (.not.isothermal) func2(i,n)=hh0int(i,n,1)/(exp(fr(i)*rfr)-1.0)
+          weight(i,n)=deltafr
+          ! Protect against floating point errors
+          ! This needs to be checked. I remember that
+          ! -700 is the minimum exponent allowed for
+          ! doubleprecision...
+          if (tau(n)*absfr(i) < 700.0) then
+             func(i,n)=integrand(i)*exp(-tau(n)*absfr(i))
+          else
+             func(i,n)=0.0
+          endif
        enddo
     enddo
-    
-    call vector_romberg (func1,weight,NumFreq,NumFreq,NumTau,phot)
+
+    call vector_romberg (func,weight,NumFreq,NumFreq,NumTau,integral_result)
     do n=0,NumTau
-       hphot(n,1)=phot(n)
+       make_table(n,IFreqBand)=4.0*pi*rstar*rstar*integral_result(n)
     enddo
-    
-    if (.not.isothermal) then
-       call vector_romberg (func2,weight,NumFreq,NumFreq,NumTau,phot)
-       do n=0,NumTau
-          hheat(n,1)=phot(n)
-       enddo
-    endif
 
-    ! frequency interval 1
-    do i=0,NumFreq
-       fr(i)=frth0+steph0(1)*real(i)
-       do n=0,NumTau
-          weight(i,n)=steph0(1)
-          func1(i,n)=h0int1(i,n,1)/(exp(fr(i)*rfr)-1.0)
-          if (.not.isothermal) func2(i,n)=hh0int1(i,n,1)/(exp(fr(i)*rfr)-1.0)
-       enddo
-    enddo
-    
-    call vector_romberg (func1,weight,NumFreq,NumFreq,NumTau,phot)
-    do n=0,NumTau
-       hphot1(n,1)=phot(n)
-    enddo
-    
-    if (.not.isothermal) then
-       call vector_romberg (func2,weight,NumFreq,NumFreq,NumTau,phot)
-       do n=0,NumTau
-          hheat1(n,1)=phot(n)
-       enddo
-    endif
-
-    ! Multiply with 4*pi*r^2 to make it a luminosity
-    rstar2=rstar*rstar
-    do nfrq=1,NumFreqBnd
-       do n=0,NumTau
-          hphot(n,nfrq)=4.0*pi*rstar2*hphot(n,nfrq)
-          hphot1(n,nfrq)=4.0*pi*rstar2*hphot1(n,nfrq)
-        enddo
-    enddo
-    if (.not.isothermal) then
-       do nfrq=1,NumFreqBnd
-          do n=0,NumTau
-             hheat(n,nfrq)=4.0*pi*rstar2*hheat(n,nfrq)
-             hheat1(n,nfrq)=4.0*pi*rstar2*hheat1(n,nfrq)
-          enddo
-       enddo
-    endif
-
-    ! Deallocate the cores
-    deallocate(h0int)
-    deallocate(h0int1)
-    if (.not.isothermal) then
-       deallocate(hh0int)
-       deallocate(hh0int1)
-    endif
-
-  end subroutine spec_integr
+  end function make_table
 
   ! =======================================================================
   
-  ! Calculates photo-ionization rates
+  !> Calculates photo-ionization rates by looking them up in the tables
   subroutine photoion (phi,hcolum_in,hcolum_out,vol)
     
     ! Calculates photo-ionization rates
@@ -605,7 +543,7 @@ contains
          (hheat(iodpo1,1)+(hheat(iodp11,1)-hheat(iodpo1,1))*dodpo1)
 
     ! Test for optically thick/thin case
-    if (abs(tauh_out-tauh_in).gt.1e-2) then 
+    if (abs(tauh_out-tauh_in) > 1e-2) then 
        
        ! find the table positions for the optical depth (outgoing)
        tau1=log10(max(1.0e-20_dp,tauh_out))

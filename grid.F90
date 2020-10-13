@@ -20,6 +20,7 @@ module grid
   use file_admin, only: stdinput, file_input
 
   implicit none
+  save
 
   ! Contains grid data
   ! dr - (radial) cell size
