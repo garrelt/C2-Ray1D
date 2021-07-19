@@ -22,7 +22,7 @@ module astroconstants
   
   real(kind=dp),parameter :: R_SOLAR=6.9599e10_dp !< Solar radius
   real(kind=dp),parameter :: L_SOLAR=3.826e33_dp !< Solar luminosity
-  real(kind=dp),parameter :: M_SOLAR=1.98892d33_dp !< Solar mass
+  real(kind=dp),parameter :: M_SOLAR=1.98892d33 !< Solar mass
   
   real(kind=dp),parameter :: YEAR=3.15576E+07_dp !< Julian year
 
