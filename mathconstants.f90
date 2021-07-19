@@ -18,6 +18,6 @@ module mathconstants
   private
 
   !> the number pi
-  real(kind=dp),public,parameter :: pi=3.141592654
+  real(kind=dp),public,parameter :: pi=3.141592654_dp
 
 end module mathconstants
