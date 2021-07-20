@@ -22,11 +22,11 @@ module cgsphotoconstants
   !	!> Helium ionization potentials (eV)
   !	real(kind=dp), dimension(0:1),parameter :: ethe=(/24.587,54.416/)
   !> Hydrogen cross section
-  real(kind=dp), parameter :: sigh=6.30e-18
+  real(kind=dp), parameter :: sigh=6.30e-18_dp
   !> Helium cross section
-  real(kind=dp), parameter :: sighe0=7.83e-18
+  real(kind=dp), parameter :: sighe0=7.83e-18_dp
   !> He+ cross section
-  real(kind=dp), parameter :: sighe1=1.58e-18
+  real(kind=dp), parameter :: sighe1=1.58e-18_dp
   !> H ionization energy in frequency
   real(kind=dp), parameter :: frth0=ev2fr*eth0
   !> He ionization energy in frequency
@@ -34,29 +34,29 @@ module cgsphotoconstants
   !> He+ ionization energy in frequency
   real(kind=dp), parameter :: frthe1=ev2fr*ethe(1)
   !> Frequency dependence of H cross section parameter
-  real(kind=dp),parameter :: betah0=1.0
+  real(kind=dp),parameter :: betah0=1.0_dp
   !> Frequency dependence of He cross section parameter
-  real(kind=dp), dimension(0:1),parameter :: betahe=(/1.0,1.0/)
+  real(kind=dp), dimension(0:1),parameter :: betahe=(/1.0_dp,1.0_dp/)
 
   !> Frequency dependence of H cross section parameter
-  real(kind=dp), parameter :: sh0=2.8
+  real(kind=dp), parameter :: sh0=2.8_dp
   !> Frequency dependence of He cross section parameter
-  real(kind=dp), parameter :: she0=1.7
+  real(kind=dp), parameter :: she0=1.7_dp
   !> Frequency dependence of He+ cross section parameter
-  real(kind=dp), parameter :: she1=2.8
+  real(kind=dp), parameter :: she1=2.8_dp
 
   !> maximum T_eff for black body
-  real(kind=dp), parameter :: thigh=200000.0
+  real(kind=dp), parameter :: thigh=200000.0_dp
   !> minimum T_eff for black body
-  real(kind=dp), parameter :: tlow=2000.0
+  real(kind=dp), parameter :: tlow=2000.0_dp
   !real(kind=dp), parameter :: frtop1=700.0*tlow/47979.72484*1e15
 
   !> Upper limits for integrals: due to arithmetic precision,
   !!     exp(700) exceeds double precision limit
-  real(kind=dp), parameter :: frtop1=700.0*tlow*kb/hplanck
+  real(kind=dp), parameter :: frtop1=700.0_dp*tlow*kb/hplanck
   !> Upper limits for integrals: due to the form of the planck
   !!     curve: take 10 times the frequency of maximum intensity
-  real(kind=dp), parameter :: frtop2=5.88e-05*thigh*1e15
+  real(kind=dp), parameter :: frtop2=5.88e-05_dp*thigh*1e15_dp
   
   !> H optical depth fit parameter for frequency range 2
   real(kind=dp) :: tf2h

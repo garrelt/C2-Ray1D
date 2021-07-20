@@ -529,7 +529,7 @@ contains
     ! find the table positions for the optical depth (ingoing)
     tau1=log10(max(1.0e-20_dp,tauh_in))
     ! odpos1=min(1.0d0*NumTau,max(0.0d0,1.0d0+(tau1-minlogtau)/
-    odpos1=min(real(NumTau,dp),max(0.0_dp,1.0+(tau1-minlogtau)/dlogtau))
+    odpos1=min(real(NumTau,dp),max(0.0_dp,1.0_dp+(tau1-minlogtau)/dlogtau))
     iodpo1=int(odpos1)
     dodpo1=odpos1-real(iodpo1,dp)
     iodp11=min(NumTau,iodpo1+1)
@@ -548,7 +548,7 @@ contains
        ! find the table positions for the optical depth (outgoing)
        tau1=log10(max(1.0e-20_dp,tauh_out))
        ! odpos1=min(1.0d0*NumTau,max(0.0d0,1.0d0+(tau1-minlogtau)/
-       odpos1=min(real(NumTau,dp),max(0.0_dp,1.0+(tau1-minlogtau)/dlogtau))
+       odpos1=min(real(NumTau,dp),max(0.0_dp,1.0_dp+(tau1-minlogtau)/dlogtau))
        iodpo1=int(odpos1)
        dodpo1=odpos1-real(iodpo1)
        iodp11=min(NumTau,iodpo1+1)
